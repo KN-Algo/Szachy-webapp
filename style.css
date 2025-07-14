@@ -10,7 +10,7 @@
 #szachownica {
     width: 70%;
     height: 100vh;
-    background-color: #000424;
+    background: linear-gradient(to bottom, #000424, #000210);
     display: inline-block;
     float: left;
 }
@@ -22,7 +22,7 @@
     float: left;
     color: white;
     padding: 20px;
-    background-color: #000424;
+    background: linear-gradient(to bottom, #000424, #000210);
 }
 
 #interfejsDziecko {
@@ -67,7 +67,7 @@ form {
 }
 
 #recznyRuch {
-    background-color: #000425;
+    background-color: #000210;
     border: 2px  #0d6efd solid;
     color: whitesmoke;
     padding: 15px 20px;
@@ -83,7 +83,7 @@ form {
     border: 2px #0d6efd solid;
     height: 20vh;
     border-radius: 10px;
-    background-color: #000425;
+    background-color: #000210;
 }
 
 h2 {
