@@ -1,14 +1,3 @@
 # Szachy-webapp
 
-Szachy-webapp/
-├── assets/
-│   └── pieces/
-│       ├── wp.png
-│       ├── wn.png
-│       ├── ...
-│       └── bk.png
-├── chessboard/
-│   ├── chessboard.php
-│   ├── chessboard.css
-│   └── chessboard.js
-├── test-szachownica.php  (to będzie main strony)
+Gotowy moduł (komponent) szachownicy do wstawienia na strone. Nie obsługje zasad szachów (brak silnika) ale za to ładnie wygląda :)
