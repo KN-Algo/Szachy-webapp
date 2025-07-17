@@ -1,12 +1,17 @@
 console.log('[Chessboard] Plansza załadowana.');
 
-// Dźwięki
+
+// ===============================
+//  DŹWIĘKI INTERFEJSU
+// ===============================
 const moveSound = new Audio('./assets/sounds/move.wav');
 const captureSound = new Audio('./assets/sounds/capture.wav');
 const errorSound = new Audio('./assets/sounds/error.wav');
 
 
-
+// ===============================
+//  STAN POCZĄTKOWY PLANSZY
+// ===============================
 let boardState = {
   a1: 'wr', b1: 'wn', c1: 'wb', d1: 'wq', e1: 'wk', f1: 'wb', g1: 'wn', h1: 'wr',
   a2: 'wp', b2: 'wp', c2: 'wp', d2: 'wp', e2: 'wp', f2: 'wp', g2: 'wp', h2: 'wp',
@@ -16,10 +21,17 @@ let boardState = {
 
 let selectedSquare = null;
 
+
+// ===============================
+// FUNKCJE POMOCNICZE
+// ===============================
+
+// Zwraca drużynę figury na podstawie jej kodu
 function getPieceTeam(code) {
   return code?.[0] === 'w' ? 'w' : code?.[0] === 'b' ? 'b' : null;
 }
 
+// Dodaje zbitą figurę do placeholdera
 function capturePiece(code) {
   const team = getPieceTeam(code);
   const container = document.getElementById(team === 'w' ? 'captured-white' : 'captured-black');
@@ -38,6 +50,10 @@ function capturePiece(code) {
   }
 }
 
+
+// ===============================
+//  RENDEROWANIE PLANSZY
+// ===============================
 function renderBoard(state) {
   document.querySelectorAll('.square').forEach(square => {
     const coord = square.dataset.coord;
@@ -60,18 +76,27 @@ function renderBoard(state) {
   }
 }
 
+
+// ===============================
+//  OBSŁUGA KLIKNIĘĆ NA POLA
+// ===============================
 document.querySelectorAll('.square').forEach(square => {
   square.addEventListener('click', () => {
     const coord = square.dataset.coord;
     const piece = boardState[coord];
 
+    // Animacja kliknięcia
     square.classList.add('clicked');
     setTimeout(() => square.classList.remove('clicked'), 400);
 
+    // Etap 1: zaznaczenie figury
     if (selectedSquare === null && piece) {
       selectedSquare = coord;
       renderBoard(boardState);
-    } else if (selectedSquare !== null) {
+    }
+
+    // Etap 2: wybrano drugie pole
+    else if (selectedSquare !== null) {
       if (coord === selectedSquare) return;
 
       const fromPiece = boardState[selectedSquare];
@@ -80,6 +105,7 @@ document.querySelectorAll('.square').forEach(square => {
       const teamFrom = getPieceTeam(fromPiece);
       const teamTo = getPieceTeam(toPiece);
 
+      //  Próba zbicia figury z tej samej drużyny
       if (teamFrom && teamTo && teamFrom === teamTo) {
         square.classList.add('invalid');
         errorSound.play();
@@ -87,19 +113,22 @@ document.querySelectorAll('.square').forEach(square => {
         return;
       }
 
+      //  Zbicie przeciwnika
       if (toPiece && teamFrom !== teamTo) {
         capturePiece(toPiece);
         captureSound.play();
-
       }
 
+      //  Przesunięcie figury
       boardState[coord] = fromPiece;
       if (!toPiece) moveSound.play();
       delete boardState[selectedSquare];
+
       selectedSquare = null;
       renderBoard(boardState);
     }
   });
 });
 
+//  Inicjalne renderowanie planszy
 renderBoard(boardState);

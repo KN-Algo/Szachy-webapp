@@ -6,5 +6,6 @@
 </head>
 <body>
   <?php include 'chessboard/chessboard.php'; ?>
+
 </body>
 </html>

@@ -14,7 +14,8 @@
     <div id="szachownica">
         <?php
 
-            //tu wstawić szachownice
+            include 'chessboard/chessboard.php';
+
 
 
         ?>

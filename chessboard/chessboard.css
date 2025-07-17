@@ -4,7 +4,7 @@
 :root {
   --dark: #000424;
   --light: #fff2f0;
-  --board-size: 480px;
+  --board-size: min(50vw, 80vh);
   --square-size: calc(var(--board-size) / 8);
   --font: 'JetBrains Mono', monospace;
 }

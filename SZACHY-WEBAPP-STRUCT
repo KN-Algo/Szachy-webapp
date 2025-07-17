@@ -9,4 +9,8 @@ Szachy-webapp/
 │   ├── chessboard.php
 │   ├── chessboard.css
 │   └── chessboard.js
-├── test-szachownica.php  (to będzie main strony)
+├── index.php (GŁÓWNY) / test-szachownica.php (stary plik do podlądu)
+├── style.css
+├──img
+   ├── cofnij.png
+   └── mikrofon.png
