@@ -1,1 +1,14 @@
 # Szachy-webapp
+
+Szachy-webapp/
+├── assets/
+│   └── pieces/
+│       ├── wp.png
+│       ├── wn.png
+│       ├── ...
+│       └── bk.png
+├── chessboard/
+│   ├── chessboard.php
+│   ├── chessboard.css
+│   └── chessboard.js
+├── test-szachownica.php  (to będzie main strony)
