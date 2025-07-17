@@ -3,8 +3,8 @@
     padding: 0;
     border: 0;
     line-height: 0;
-    font-family: Arial, Helvetica, sans-serif;
     color: #fff2f0;
+    font-family: 'JetBrains Mono', monospace;
 }
 
 #szachownica {
@@ -26,22 +26,40 @@
 }
 
 #interfejsDziecko {
-    border: 2px #0d6efd solid;
-    border-radius: 10px;
+    border: 4px #0d6efd solid;
+    border-radius: 20px;
+    box-shadow: 0 0 20px #0d6efd;
 }
 
 #sterowanie {
     padding: 20px;
 }
 
+#obaPrzyciskiKontener {
+    position: relative;
+    height: 18vh;
+}
 
 #mikrofon,#cofnijRuch {
-    width: 18vmin;
-    height: 18vmin;
+    width: 8.4vw;
+    height: 8.4vw;
     display: block;
     margin: 1.5vh auto;
     border-radius: 50%;
     
+}
+
+#mikrofon {
+    position: absolute;
+    left: 12%;
+    box-shadow: 0 0 5px #0d6efd;
+
+}
+
+#cofnijRuch {
+    position: absolute;
+    right: 12%;
+    box-shadow: 0 0 5px rgb(255, 79, 79);
 }
 
 
@@ -68,10 +86,12 @@ form {
 
 #recznyRuch {
     background-color: #000210;
-    border: 2px  #0d6efd solid;
+    border: 4px  #0d6efd solid;
     color: whitesmoke;
     padding: 15px 20px;
     font-size: large;
+    border-radius: 20px;
+    box-shadow: 0 0 10px #0d6efd;
 }
 
 
@@ -80,14 +100,16 @@ form {
 }
 
 #logi div {
-    border: 2px #0d6efd solid;
-    height: 20vh;
-    border-radius: 10px;
+    border: 4px #0d6efd solid;
+    height: 41.5vh;
+    border-radius: 20px;
     background-color: #000210;
+    box-shadow: 0 0 10px #0d6efd;
 }
 
 h2 {
     text-align: center;
-    font-size: 150% !important;
+    font-size: 160% !important;
+    clear: both;
 }
 
