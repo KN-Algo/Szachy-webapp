@@ -1,0 +1,336 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap');
+
+
+:root {
+  --dark: #000424;
+  --light: #fff2f0;
+  --board-size: min(50vw, 80vh);
+  --square-size: calc(var(--board-size) / 8);
+  --font: 'JetBrains Mono', monospace;
+}
+
+.chessboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  font-family: var(--font);
+}
+
+/* Ramka wokół planszy */
+.chessboard-container {
+  display: grid;
+  grid-template-columns: 28px repeat(8, var(--square-size)) 28px;
+  grid-template-rows: 28px repeat(8, var(--square-size)) 28px;
+
+  --border-angle: 0turn;
+
+ 
+
+  background:
+    conic-gradient(
+      from var(--border-angle),
+      #000424 0deg,
+      #001133 25deg,
+      #002244 50deg,
+      #003355 75deg,
+      #004466 100deg,
+      #005577 125deg,
+      #004466 150deg,
+      #003355 175deg,
+      #002244 200deg,
+      #001133 225deg,
+      #000424 250deg,
+      transparent 360deg
+    ) padding-box,
+    conic-gradient(
+      from var(--border-angle),
+      transparent 40%,
+      #555454 45%,
+      transparent 50%
+    ) border-box,
+    radial-gradient(circle at 40% 40%, #050530, #000424) border-box;
+
+  animation: bg-spin 15s linear infinite;
+  filter: brightness(1.2);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  border: 4px #0d6efd solid;
+    border-radius: 20px;
+    box-shadow: 0 0 20px #0d6efd;
+}
+
+
+
+/* Napisy A–H */
+.chessboard-container .legend-letter {
+  grid-column: span 1;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff0f0;
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.8;
+  user-select: none;
+}
+
+
+
+/* Napisy 1–8 */
+.chessboard-container .legend-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff0f0;
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.8;
+  user-select: none;
+}
+
+
+@keyframes bg-spin {
+  to {
+    --border-angle: 1turn;
+  }
+}
+
+@property --border-angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0turn;
+}
+
+
+/* Główne pole szachownicy */
+.square {
+  width: var(--square-size);
+  height: var(--square-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: visible;
+}
+
+/* Jasne pole */
+.square.light {
+  background: radial-gradient(circle at 35% 35%, #fff8f7, #fff2f0);
+}
+
+/* Ciemne pole */
+.square.dark {
+  background: radial-gradient(circle at 60% 60%, #08084f, #000424);
+}
+
+/* Stała poświata + animacja wejścia */
+.square.active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: rgba(0, 246, 255, 0.08);
+  box-shadow: 0 0 0 2px #00f6ff, 0 0 25px 10px rgba(0, 246, 255, 0.6);
+  animation:
+    fade-in 0.2s ease-out,
+    active-glow 1.2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes active-glow {
+  0% {
+    box-shadow: 0 0 0 2px #00f6ff, 0 0 20px 8px rgba(0, 246, 255, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 2px #00f6ff, 0 0 32px 16px rgba(0, 246, 255, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 0 2px #00f6ff, 0 0 20px 8px rgba(0, 246, 255, 0.6);
+  }
+}
+
+
+.square.clicked::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  background: rgba(0, 246, 255, 0.3);
+  top: 0;
+  left: 0;
+  animation: click-ping 0.7s ease-out forwards;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Animacja: aktywne pulsowanie */
+@keyframes active-glow {
+  0% {
+    box-shadow: 0 0 0 2px #00f6ff, 0 0 10px 4px rgba(0, 246, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 2px #00f6ff, 0 0 18px 8px rgba(0, 246, 255, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 2px #00f6ff, 0 0 10px 4px rgba(0, 246, 255, 0.5);
+  }
+}
+
+/* Animacja: kliknięcie – krótki błysk */
+@keyframes click-ping {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.05);
+    opacity: 0;
+  }
+}
+
+.square img.chess-piece {
+  max-width: 90%;
+  max-height: 90%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.piece.white img {
+  filter: brightness(0) saturate(100%) invert(100%);
+}
+
+.piece.black img {
+  filter: brightness(0) saturate(100%) invert(40%) sepia(100%) hue-rotate(180deg);
+}
+
+.square img {
+  filter: drop-shadow(0 0 3px #000000aa);
+}
+
+
+.square.invalid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: rgba(255, 0, 0, 0.12);
+  box-shadow: 0 0 0 2px #ff0000, 0 0 25px 10px rgba(255, 0, 0, 0.4);
+  animation: invalid-flash 0.5s ease-out;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes invalid-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+
+
+
+
+.chessboard-wrapper-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 20px;
+  justify-content: center;
+}
+
+
+.captured {
+  width: 100%;
+  max-width: 180px;
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 4px;
+  padding: 10px;
+  background-color: #000424;
+  border: 4px #0d6efd solid;
+    border-radius: 20px;
+    box-shadow: 0 0 20px #0d6efd;
+  flex-shrink: 0;
+}
+
+.captured-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  min-width: 150px;
+  padding-top: 8px;
+}
+
+.captured-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff2f0;
+  text-align: center;
+  opacity: 0.75;
+  margin-bottom: 2px; 
+}
+
+
+.captured-slot {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.captured-slot img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 2px #00000088);
+}
+
+
+
+.slot {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+

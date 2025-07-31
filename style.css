@@ -1,0 +1,115 @@
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    line-height: 0;
+    color: #fff2f0;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+#szachownica {
+    width: 70%;
+    height: 100vh;
+    background: linear-gradient(to bottom, #000424, #000210);
+    display: inline-block;
+    float: left;
+}
+
+#interfejs {
+    width: 30%;
+    height: 100vh;
+    display: inline-block;
+    float: left;
+    color: white;
+    padding: 20px;
+    background: linear-gradient(to bottom, #000424, #000210);
+}
+
+#interfejsDziecko {
+    border: 4px #0d6efd solid;
+    border-radius: 20px;
+    box-shadow: 0 0 20px #0d6efd;
+}
+
+#sterowanie {
+    padding: 20px;
+}
+
+#obaPrzyciskiKontener {
+    position: relative;
+    height: 18vh;
+}
+
+#mikrofon,#cofnijRuch {
+    width: 8.4vw;
+    height: 8.4vw;
+    display: block;
+    margin: 1.5vh auto;
+    border-radius: 50%;
+    
+}
+
+#mikrofon {
+    position: absolute;
+    left: 12%;
+    box-shadow: 0 0 5px #0d6efd;
+
+}
+
+#cofnijRuch {
+    position: absolute;
+    right: 12%;
+    box-shadow: 0 0 5px rgb(255, 79, 79);
+}
+
+
+#mikrofon img, #cofnijRuch img {
+    width: 50%;
+    height: 50%;
+    -webkit-filter: invert(85%); 
+    filter: invert(85%);
+}
+
+#przyciskiKontener {
+    text-align: center;
+}
+
+.przyciski {
+    border-collapse: collapse;
+    width: 40%;
+    margin: 15px 5px;
+}
+
+form {
+    margin-top: 50px;
+}
+
+#recznyRuch {
+    background-color: #000210;
+    border: 4px  #0d6efd solid;
+    color: whitesmoke;
+    padding: 15px 20px;
+    font-size: large;
+    border-radius: 20px;
+    box-shadow: 0 0 10px #0d6efd;
+}
+
+
+#logi {
+    padding: 20px;
+}
+
+#logi div {
+    border: 4px #0d6efd solid;
+    height: 41.5vh;
+    border-radius: 20px;
+    background-color: #000210;
+    box-shadow: 0 0 10px #0d6efd;
+}
+
+h2 {
+    text-align: center;
+    font-size: 160% !important;
+    clear: both;
+}
+
