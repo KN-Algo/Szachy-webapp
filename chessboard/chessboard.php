@@ -61,7 +61,7 @@ echo "<div></div>";
 echo '</div>'; // chessboard-container
 echo '</div>'; // chessboard-wrapper
 echo '</div>'; // chessboard-wrapper-row
-
-// Skrypt
-echo '<script src="chessboard/chessboard.js"></script>';
 ?>
+
+<script src="chessboard/chessboard.js" defer></script>
+<script src="validation/backend-integration.js" defer></script>
