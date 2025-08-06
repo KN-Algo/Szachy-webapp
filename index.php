@@ -57,7 +57,5 @@
             </div>
         </div>
     </div>
-    <script src="eventsource.polyfill.js"></script>
-
 </body>
 </html>
