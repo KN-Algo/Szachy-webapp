@@ -6,9 +6,10 @@ console.log('[Chessboard] Plansza załadowana.');
 const moveSound = new Audio('./assets/sounds/move.wav');
 const captureSound = new Audio('./assets/sounds/capture.wav');
 const errorSound = new Audio('./assets/sounds/error.wav');
+const selectSound = new Audio('./assets/sounds/select.wav');
 
 // ===============================
-//  STAN POCZĄTKOWY PLANSZY
+//  STAN POCZĄTKOWY PLANSZY (front – natychmiastowy start)
 // ===============================
 let boardState = {
   a1: 'wr', b1: 'wn', c1: 'wb', d1: 'wq', e1: 'wk', f1: 'wb', g1: 'wn', h1: 'wr',
@@ -22,7 +23,6 @@ let selectedSquare = null;
 // ===============================
 // FUNKCJE POMOCNICZE
 // ===============================
-
 function getPieceTeam(code) {
   return code?.[0] === 'w' ? 'w' : code?.[0] === 'b' ? 'b' : null;
 }
@@ -46,7 +46,7 @@ function capturePiece(code) {
 }
 
 // ===============================
-//  RENDEROWANIE PLANSZY
+//  RENDEROWANIE PLANSZY (z obiektu `boardState`)
 // ===============================
 function renderBoard(state) {
   document.querySelectorAll('.square').forEach(square => {
@@ -72,7 +72,7 @@ function renderBoard(state) {
 }
 
 // ===============================
-//  OBSŁUGA KLIKNIĘĆ NA POLA
+//  OBSŁUGA KLIKNIĘĆ NA POLA (lekki feedback – bez pełnego renderu)
 // ===============================
 document.querySelectorAll('.square').forEach(square => {
   square.addEventListener('click', () => {
@@ -82,22 +82,43 @@ document.querySelectorAll('.square').forEach(square => {
     square.classList.add('clicked');
     setTimeout(() => square.classList.remove('clicked'), 400);
 
-    if (selectedSquare === null && piece) {
+    // ZAWSZE pozwól wybrać nową figurę i wysłać nowe żądanie
+    if (piece) {
       selectedSquare = coord;
+
+      // czyść stare highlighty i podświetl bieżące źródłowe pole
+      document.querySelectorAll('.square.active, .square.invalid')
+        .forEach(el => el.classList.remove('active', 'invalid'));
+      document.querySelector(`.square[data-coord="${coord}"]`)?.classList.add('active');
+
+       // odtwórz dźwięk wyboru
+    selectSound.currentTime = 0;
+    selectSound.play().catch(() => {});
+
+
+      // wyślij żądanie możliwych ruchów (backend może je liczyć wiele razy)
       requestPossibleMoves(coord);
+    } else {
+      // klik w puste pole: wyczyść wybór i highlighty
+      selectedSquare = null;
+      document.querySelectorAll('.square.active, .square.invalid')
+        .forEach(el => el.classList.remove('active', 'invalid'));
     }
   });
 });
 
-//  Inicjalne renderowanie planszy
+
+//  Inicjalne renderowanie planszy (pozycja startowa – natychmiast)
 renderBoard(boardState);
 
 // ===============================
-//  EXPORT DO GLOBALNEGO ZASIĘGU
+//  EXPORT DO GLOBALNEGO ZASIĘGU (dla backend-integration.js)
 // ===============================
-window.renderBoard = renderBoard;
-window.boardState = boardState;
-window.selectedSquare = selectedSquare;
-window.moveSound = moveSound;
-window.captureSound = captureSound;
-window.errorSound = errorSound;
+window.renderBoard   = renderBoard;
+window.boardState    = boardState;
+window.selectedSquare= selectedSquare;
+window.moveSound     = moveSound;
+window.captureSound  = captureSound;
+window.errorSound    = errorSound;
+window.capturePiece  = capturePiece;
+window.getPieceTeam  = getPieceTeam;   

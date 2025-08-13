@@ -129,43 +129,51 @@
   background: radial-gradient(circle at 60% 60%, #08084f, #000424);
 }
 
-/* Stała poświata + animacja wejścia */
-.square.active::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 6px;
-  background: rgba(0, 246, 255, 0.08);
-  box-shadow: 0 0 0 2px #00f6ff, 0 0 25px 10px rgba(0, 246, 255, 0.6);
-  animation:
-    fade-in 0.2s ease-out,
-    active-glow 1.2s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 2;
+/* NEON – wersja przyjazna wielu polom obok siebie */
+.square.active::after{
+  content:"";
+  position:absolute;
+  inset:5px;                 /* większy odstęp od krawędzi pola (mniej zlewania) */
+  border-radius:10px;
+  background: transparent;   /* zero wypełnienia – tylko obrys */
+  border:2px solid #00f6ff;  /* ostry, cienki kontur */
+  /* delikatny glow: mały zasięg, by nie nakładał się na sąsiednie pola */
+  box-shadow:
+    0 0 8px rgba(0,246,255,.55),
+    0 0 2px rgba(0,246,255,.9) inset;
+  animation: neon-tight 1100ms ease-in-out infinite;
+  pointer-events:none;
+  z-index:2;
+  mix-blend-mode: screen;    /* pomaga na kontrast na ciemnych i jasnych polach */
 }
 
-@keyframes fade-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* puls o małej amplitudzie – nie „rozlewa” się */
+@keyframes neon-tight{
+  0%   { box-shadow: 0 0 6px rgba(0,246,255,.50), 0 0 2px rgba(0,246,255,.85) inset; }
+  50%  { box-shadow: 0 0 12px rgba(0,246,255,.75), 0 0 3px rgba(0,246,255,1) inset;  }
+  100% { box-shadow: 0 0 6px rgba(0,246,255,.50), 0 0 2px rgba(0,246,255,.85) inset; }
 }
 
-@keyframes active-glow {
-  0% {
-    box-shadow: 0 0 0 2px #00f6ff, 0 0 20px 8px rgba(0, 246, 255, 0.6);
-  }
-  50% {
-    box-shadow: 0 0 0 2px #00f6ff, 0 0 32px 16px rgba(0, 246, 255, 0.8);
-  }
-  100% {
-    box-shadow: 0 0 0 2px #00f6ff, 0 0 20px 8px rgba(0, 246, 255, 0.6);
-  }
+@media (prefers-reduced-motion: reduce){
+  .square.active::after{ animation:none; }
 }
+
+/* Wzmocnienie obramówki NA JASNYCH POLACH */
+.square.light.active::after {
+  /* wyłącz mieszanie, które gasi efekt na białym tle */
+  mix-blend-mode: normal;
+
+  /* wyraźny kontur + delikatny ciemny „kontrapierścień” pod spodem */
+  border: 3px solid #00f6ff;
+  box-shadow:
+    0 0 0 6px rgba(0, 4, 36, 0.55),   /* półciemny ring dla kontrastu na białym */
+    0 0 12px rgba(0, 246, 255, .75),  /* krótki glow, żeby się nie zlewał z sąsiednimi */
+    0 0 3px rgba(0, 246, 255, .9) inset;
+
+  /* jeśli Twoja wersja ma większy odstęp – dostosuj, ale zwykle 4–5px działa idealnie */
+  inset: 4px;
+}
+
 
 
 .square.clicked::before {
