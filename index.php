@@ -1,61 +1,99 @@
-<!DOCTYPE html>
+<?php
+// index.php – główny kontener aplikacji (nowy layout + tło)
+?><!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magiczne szachy</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Algo – Inteligentna Szachownica</title>
+
+  <!-- Style globalny i styl planszy -->
+  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./chessboard/chessboard.css" />
+
+  <script>
+  // Adres Twojego backendu Symfony (Docker/localhost)
+  window.CHESS_BACKEND_URL = 'http://127.0.0.1:8000';
+</script>
+
 </head>
 <body>
-    <div id="szachownica">
-        <?php
 
-            include 'chessboard/chessboard.php';
+  <!-- TŁO: particles (pełny ekran, pod całym layoutem) -->
+  <canvas id="bgParticles" aria-hidden="true"></canvas>
 
+  <div id="app">
+    <main class="layout">
+      <!-- LEWA KOLUMNA: SZACHOWNICA -->
+      <section id="board-col">
+        <?php include __DIR__ . '/chessboard/chessboard.php'; ?>
+      </section>
 
-
-        ?>
-    </div>
-    <div id="interfejs">
-        <div id="interfejsDziecko" class="bg-black bg-gradient">
-            <div id="sterowanie">
-                <div id="obaPrzyciskiKontener">
-                    <button id="mikrofon" class="btn btn-outline-primary border-3">
-                        <img src="./img/mikrofon.png" alt="mikrofon">
-                    </button>
-                    <button id="cofnijRuch" class="btn btn-outline-danger border-3">
-                        <img src="./img/cofnij.png" alt="confij">
-                    </button>
-                </div>
-                    <form id="wprowadzRecznie">
-                        <h2>Wprowadź ruch ręcznie</h2>
-
-                        <!-- tutaj jest formularz do wprowadzania ręcznie ruchu -->
-
-                        <input type="text" class="form-control" id="recznyRuch">
-                        <div id="przyciskiKontener">
-                            <input type="submit" value="Wprowadź" class="btn btn-outline-success przyciski">
-                            <input type="reset" value="Anuluj" class="btn btn-outline-danger przyciski">
-                        </div>
-                    </form>
-
-            </div>
-            <div id="logi">
-                <h2>Logi ruchów</h2>
-                <div>
-                    <?php
-
-                        //tutaj wyświetlanie logów 
-
-
-                    ?>
-                </div>
-            </div>
+      <!-- PRAWA KOLUMNA: PANEL GRY -->
+      <aside id="panel-col">
+        <!-- RUCH TERAZ -->
+        <div class="panel-card" id="turn-card">
+          <h3>Ruch teraz</h3>
+          <div id="turn-indicator" class="turn-indicator white">
+            <span class="dot"></span><span class="label">Białe</span>
+          </div>
         </div>
+
+        <!-- ZBITE FIGURY -->
+        <div class="panel-card">
+          <h3>Zbite figury przeciwnika</h3>
+          <div id="captured-opponent" class="captured-grid"></div>
+        </div>
+
+        <div class="panel-card">
+          <h3>Twoje zbite figury</h3>
+          <div id="captured-player" class="captured-grid"></div>
+        </div>
+
+        <!-- LOGI RUCHÓW -->
+        <div class="panel-card" id="logs-card">
+          <h3>Logi ruchów</h3>
+          <div class="logs-wrap">
+            <table class="moves-table">
+              <thead><tr><th>#</th><th>Białe</th><th>Czarne</th></tr></thead>
+              <tbody id="moves-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- STATUS + AKCJE -->
+        <div class="panel-row">
+          <div class="panel-card status-card">
+            <h3>Status</h3>
+            <div class="status-badges">
+              <span id="status-raspi"  class="badge badge-muted">RPi: —</span>
+              <span id="status-engine" class="badge badge-muted">Silnik: —</span>
+            </div>
+          </div>
+          <div class="panel-card actions-card">
+            <h3>Akcje</h3>
+            <button class="btn-reset" data-action="reset-game">Resetuj grę</button>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- MODAL: KONIEC GRY -->
+  <div id="gameOverOverlay" class="go-overlay" aria-hidden="true">
+    <div class="go-modal" role="dialog" aria-modal="true">
+      <h3 id="goTitle">Koniec gry</h3>
+      <p id="goSubtitle">Biali wygrali (szach mat)</p>
+      <div class="go-actions">
+        <button id="goResume" class="go-btn go-btn-ghost">Wróć do partii</button>
+        <button class="go-btn go-btn-primary" data-action="reset-game">Zacznij od nowa</button>
+      </div>
     </div>
+    <canvas id="goConfetti"></canvas>
+  </div>
+
+  <!-- Skrypty -->
+  <script src="./chessboard/chessboard.js"></script>
+  <script src="./validation/backend-integration.js"></script>
 </body>
 </html>

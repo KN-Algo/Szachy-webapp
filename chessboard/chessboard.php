@@ -4,30 +4,10 @@ $ranks = [8,7,6,5,4,3,2,1];
 
 // Styl + wrapper główny
 echo '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@500&display=swap">';
-echo '<link rel="stylesheet" href="chessboard/chessboard.css">';
+
 
 echo '<div class="chessboard-wrapper-row">';
 
-// Lewy panel – Placeholdery (Przeciwnik i Gracz)
-echo '<div class="captured-column">';
-
-// Przeciwnik
-echo '<div class="captured-label">Zbite figury przeciwnika</div>';
-echo '<div class="captured captured-black" id="captured-black">';
-for ($i = 0; $i < 16; $i++) {
-  echo '<div class="captured-slot"><!-- pusty slot --></div>';
-}
-echo '</div>';
-
-// Gracz
-echo '<div class="captured-label">Twoje zbite figury</div>';
-echo '<div class="captured captured-white" id="captured-white">';
-for ($i = 0; $i < 16; $i++) {
-  echo '<div class="captured-slot"><!-- pusty slot --></div>';
-}
-echo '</div>';
-
-echo '</div>';
 
 
 // Prawy panel – Szachownica
@@ -63,5 +43,4 @@ echo '</div>'; // chessboard-wrapper
 echo '</div>'; // chessboard-wrapper-row
 ?>
 
-<script src="chessboard/chessboard.js" defer></script>
-<script src="validation/backend-integration.js" defer></script>
+

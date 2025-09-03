@@ -231,8 +231,9 @@
 }
 
 .piece.black img {
-  filter: brightness(0) saturate(100%) invert(40%) sepia(100%) hue-rotate(180deg);
+  filter: brightness(1.2) drop-shadow(0 0 2px #000000); 
 }
+
 
 .square img {
   filter: drop-shadow(0 0 3px #000000aa);
@@ -342,3 +343,12 @@
 }
 
 
+/* Lepsza widoczność figur na ciemnych polach */
+.square.dark img.chess-piece,
+.square.dark .piece.black img {
+  /* nadpisujemy poprzedni filter (ostatnia reguła wygrywa) */
+  filter:
+    brightness(1.35) contrast(1.05)
+    drop-shadow(0 0 0.75px rgba(255, 242, 240, 0.85))  /* cienki jasny kontur */
+    drop-shadow(0 0 4px rgba(255, 242, 240, 0.25));    /* delikatny glow pod kontrast */
+}
