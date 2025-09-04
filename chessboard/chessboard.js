@@ -9,11 +9,10 @@ const errorSound   = new Audio('./assets/sounds/error.wav');
 const selectSound  = new Audio('./assets/sounds/select.wav');
 
 // zamiast "const moveSound = new Audio(...)" itd.:
-window.moveSound    = window.moveSound    || new Audio('./assets/sounds/move.wav');
-window.captureSound = window.captureSound || new Audio('./assets/sounds/capture.wav');
-window.errorSound   = window.errorSound   || new Audio('./assets/sounds/error.wav');
-window.selectSound  = window.selectSound  || new Audio('./assets/sounds/select.wav');
-
+window.moveSound    = window.moveSound    || moveSound;
+window.captureSound = window.captureSound || captureSound;
+window.errorSound   = window.errorSound   || errorSound;
+window.selectSound  = window.selectSound  || selectSound;
 
 // ===============================
 //  STAN POCZĄTKOWY PLANSZY (globalnie na window)
@@ -64,7 +63,7 @@ function renderBoard(state) {
     const pieceCode = state[coord];
     if (pieceCode) {
       const img = document.createElement('img');
-      img.src = `./assets/pieces/${pieceCode}.png`;
+      img.src = `./assets/pieces/${pieceCode}.webp`; // zmiana z .png na .webp
       img.alt = pieceCode;
       img.classList.add('chess-piece');
       square.appendChild(img);
@@ -190,6 +189,317 @@ window.UI_ApplyGameReset = function(state){
 
 
 // ===============================
+//  UI/FRONTEND: WIZUALNE FUNKCJE Z BACKEND-INTEGRATION.JS
+// ===============================
+
+// --- Podświetlenia ---
+window.clearHighlights = function() {
+  document
+    .querySelectorAll('.square.active, .square.invalid, .square.move-target')
+    .forEach(el => el.classList.remove('active', 'invalid', 'move-target'));
+};
+
+// --- Log ruchów ---
+window.MovesLog = (function(){
+  const tbody = () => document.getElementById('moves-tbody');
+  const data = [];
+  let lastNo = 0;
+
+  function toCellText(move, san){
+    if (san && typeof san === 'string') return san;
+    if (!move) return '';
+    return `${(move.from||'').toLowerCase()}–${(move.to||'').toLowerCase()}`;
+  }
+
+  function add(move, color /* 'white'|'black' */, san){
+    if (!move || !move.from || !move.to) return;
+    if (color === 'white'){
+      lastNo += 1;
+      data.push({ no:lastNo, white: toCellText(move, san), black:'' });
+    } else {
+      if (!data.length) { lastNo = 1; data.push({ no:lastNo, white:'', black: toCellText(move, san) }); }
+      else { data[data.length-1].black = toCellText(move, san); }
+    }
+    render();
+  }
+
+  function reset(){ data.length = 0; lastNo = 0; render(); }
+
+  function render(){
+    const tb = tbody(); if (!tb) return;
+    const wrap = tb.parentElement;
+    const stick = wrap ? (wrap.scrollTop + wrap.clientHeight >= wrap.scrollHeight - 4) : false;
+
+    tb.innerHTML = data.map(r=>`<tr><td>${r.no}</td><td>${r.white||''}</td><td>${r.black||''}</td></tr>`).join('');
+
+    if (wrap && stick) wrap.scrollTop = wrap.scrollHeight;
+  }
+
+  return { add, reset };
+})();
+
+// --- Modal końca gry + konfetti + dźwięk zwycięstwa ---
+window.GO = (function () {
+  const overlay = document.getElementById('gameOverOverlay');
+  const title   = document.getElementById('goTitle');
+  const sub     = document.getElementById('goSubtitle');
+  const btnResume = document.getElementById('goResume');
+  const btnReset  = document.getElementById('goReset');
+  const canvas = document.getElementById('goConfetti');
+  let ctx, W, H, particles = [];
+  let gameEnded = false;
+  let resumeArmed = false;
+  let rafId = null;
+
+  let victorySound = null;
+  try { victorySound = new Audio('./assets/sounds/victory.wav'); } catch (_) {}
+  function playVictory() {
+    try {
+      if (victorySound) { victorySound.currentTime = 0; victorySound.play(); }
+      else { window.moveSound?.play?.(); }
+    } catch(_) {}
+  }
+
+  function spawnConfetti(n = 160) {
+    if (!canvas || !overlay) return;
+    cancelAnimationFrame(rafId);
+    W = canvas.width = overlay.clientWidth;
+    H = canvas.height = overlay.clientHeight;
+    ctx = canvas.getContext('2d');
+
+    const g = 0.045;
+    const wind = () => (Math.sin(performance.now() / 900) * 0.05);
+    particles = Array.from({ length: n }, () => ({
+      x: Math.random() * W, y: -20 - Math.random() * 120,
+      vx: -0.7 + Math.random() * 1.4, vy: 1.5 + Math.random() * 2.2,
+      rot: Math.random() * Math.PI * 2, vr: (-0.12 + Math.random() * 0.24),
+      s: 6 + Math.random() * 10, a: 1,
+      c: Math.random() < 0.5 ? '#fff2f0' : '#0d6efd'
+    }));
+
+    const step = () => {
+      const overlayActive = overlay.classList.contains('active');
+      ctx.clearRect(0, 0, W, H);
+      const w = wind();
+
+      particles.forEach(p => {
+        p.vx += w * 0.01; p.vy += g;
+        p.x  += p.vx;     p.y  += p.vy;
+        p.rot += p.vr;
+        if (!overlayActive || p.y > H * 0.6) p.a -= 0.008;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.a);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.c;
+        ctx.fillRect(-p.s/2, -p.s/2, p.s, p.s);
+        ctx.restore();
+      });
+
+      particles = particles.filter(p => p.a > 0 && p.y < H + 40 && p.x > -40 && p.x < W + 40);
+
+      if (overlayActive || particles.length) rafId = requestAnimationFrame(step);
+      else ctx.clearRect(0, 0, W, H);
+    };
+
+    rafId = requestAnimationFrame(step);
+  }
+
+  function show({ winner, result }) {
+    if (!overlay) return;
+
+    gameEnded = true;
+    resumeArmed = true;
+
+    const kolor = winner === 'white' ? 'Biali' : winner === 'black' ? 'Czarni' : 'Nikt';
+    const wynik = result === 'checkmate' ? 'szach mat'
+                 : result === 'stalemate' ? 'pat'
+                 : result === 'draw' ? 'remis'
+                 : (result || '');
+    if (title) title.textContent = 'Koniec gry';
+    if (sub)   sub.textContent   = winner ? `${kolor} wygrali (${wynik})` : `Gra zakończona${wynik ? ` (${wynik})` : ''}`;
+
+    overlay.classList.add('active');
+    overlay.setAttribute('aria-hidden', 'false');
+    spawnConfetti();
+    playVictory();
+
+    if (btnResume) {
+      btnResume.onclick = () => {
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+      };
+    }
+
+    if (btnReset) {
+      btnReset.onclick = async () => {
+        try {
+          const res = await fetch(window.CHESS_BACKEND_URL + '/restart', { method:'POST', headers:{ 'Content-Type':'application/json' }});
+          console.debug('[RESET] /restart (modal) status:', res.status);
+          if (!res.ok) throw new Error('Restart failed');
+        } catch (e) {
+          console.error(e);
+        } finally {
+          overlay.classList.remove('active');
+          overlay.setAttribute('aria-hidden', 'true');
+          gameEnded = false;
+          resumeArmed = false;
+        }
+      };
+    }
+  }
+
+  return {
+    show,
+    clearFlagsOnReset() {
+      gameEnded = false;
+      resumeArmed = false;
+      cancelAnimationFrame(rafId);
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    },
+    hide() {
+      if (!overlay) return;
+      overlay.classList.remove('active');
+      overlay.setAttribute('aria-hidden', 'true');
+    },
+  };
+})();
+
+// --- Tło: Particles ---
+window.startParticles = function(){
+  const cvs = document.getElementById('bgParticles'); if (!cvs) return;
+  const ctx = cvs.getContext('2d');
+  let W=0, H=0, rafId=null, running=true;
+
+  const dots = [];
+  function resize(){
+    W = cvs.width = window.innerWidth;
+    H = cvs.height = window.innerHeight;
+    const target = Math.round(W*H*0.00015); // więcej punktów
+    while(dots.length < target) dots.push(spawn());
+    while(dots.length > target) dots.pop();
+  }
+  function spawn(){
+    return {
+      x: Math.random()*W, y: Math.random()*H,
+      vx: (-0.25 + Math.random()*0.5), vy: (-0.25 + Math.random()*0.5),
+      r: 1.2 + Math.random()*2.2, // większy rozmiar
+      c: Math.random() < 0.5 ? 'rgba(0,246,255,0.55)' : 'rgba(255,242,240,0.45)' // mocniejsze kolory
+    };
+  }
+  function step(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of dots){
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -10) p.x = W+10; else if (p.x > W+10) p.x = -10;
+      if (p.y < -10) p.y = H+10; else if (p.y > H+10) p.y = -10;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.shadowColor = p.c;
+      ctx.shadowBlur = 8;
+      ctx.fillStyle=p.c;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    for(let i=0;i<dots.length;i++){
+      for(let j=i+1;j<dots.length;j++){
+        const a=dots[i], b=dots[j];
+        const dx=a.x-b.x, dy=a.y-b.y, d = Math.hypot(dx,dy);
+        if (d<120){
+          ctx.globalAlpha = 1 - (d/120);
+          ctx.strokeStyle = 'rgba(0,246,255,0.32)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
+    if(running) rafId = requestAnimationFrame(step);
+  }
+
+  window.addEventListener('resize', resize);
+  document.addEventListener('visibilitychange', ()=>{ running = !document.hidden; if(running) step(); });
+  resize(); step();
+};
+
+// Wywołanie po załadowaniu strony:
+window.addEventListener('DOMContentLoaded', () => {
+  if (typeof window.startParticles === 'function') window.startParticles();
+});
+
+// --- Panel zbitych figur ---
+window.resetCaptures = function resetCaptures() {
+  const opp = document.getElementById('captured-opponent');
+  const me  = document.getElementById('captured-player');
+  if (opp) opp.innerHTML = '';
+  if (me)  me.innerHTML  = '';
+};
+
+window.capturePiece = function capturePiece(code) {
+  const opp = document.getElementById('captured-opponent');
+  const me  = document.getElementById('captured-player');
+  if (!opp || !me || !code) return;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'cap-wrap';
+
+  const img = document.createElement('img');
+  img.src = `./assets/pieces/${code}.webp`; // zmiana z .png na .webp
+  img.alt = code;
+  img.className = 'captured-piece ' + (code[0] === 'b' ? 'is-black' : 'is-white');
+  img.draggable = false;
+
+  wrap.appendChild(img);
+
+  const target = code[0] === 'w' ? opp : me;
+  target.appendChild(wrap);
+};
+
+// --- Statusy/badge ---
+window.setBadge = function(el, status, label) {
+  if (!el) return;
+  el.className = 'badge';
+  const s = String(status||'').toLowerCase();
+  if (s === 'ready' || s === 'healthy' || s === 'ok') el.classList.add('badge-ok');
+  else if (s === 'thinking' || s === 'warning') el.classList.add('badge-warn');
+  else if (s === 'error' || s === 'down') el.classList.add('badge-err');
+  else el.classList.add('badge-muted');
+  el.textContent = `${label}: ${status||'—'}`;
+};
+
+// --- Podświetlanie możliwych ruchów ---
+window.highlightPossibleMoves = function(origin, moves) {
+  renderBoard(window.boardState);
+  document.querySelectorAll('.square.active, .square.move-target').forEach(el => {
+    el.classList.remove('active', 'move-target');
+    el.onclick = null;
+  });
+
+  const originEl = document.querySelector(`.square[data-coord="${origin}"]`);
+  if (originEl) originEl.classList.add('active');
+
+  (moves || []).forEach((to) => {
+    const el = document.querySelector(`.square[data-coord="${to}"]`);
+    if (!el) return;
+    el.classList.add('move-target', 'active');
+    const handler = () => {
+      try { selectSound?.play?.(); } catch (_) {}
+      if (typeof sendMove === 'function') sendMove(origin, to);
+    };
+    el.addEventListener('click', handler, { once: true });
+  });
+
+  console.log(`[UI] Podświetlono ${moves?.length || 0} ruchów z ${origin}`);
+};
+
+window.showMoveRejected = function(reason) {
+  console.warn('[Ruch odrzucony]', reason);
+  try { errorSound?.play?.(); } catch(_) {}
+  window.selectedSquare = null;
+  renderBoard(window.boardState);
+};
+
+// ===============================
 //  EXPORT DO GLOBALNEGO ZASIĘGU (dla backend-integration.js)
 // ===============================
 window.renderBoard    = renderBoard;
@@ -199,3 +509,5 @@ window.errorSound     = errorSound;
 window.selectSound    = selectSound;
 window.capturePiece   = capturePiece;
 window.getPieceTeam   = getPieceTeam;
+
+// ===============================

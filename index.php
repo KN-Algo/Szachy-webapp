@@ -18,7 +18,6 @@
 
 </head>
 <body>
-
   <!-- TŁO: particles (pełny ekran, pod całym layoutem) -->
   <canvas id="bgParticles" aria-hidden="true"></canvas>
 
