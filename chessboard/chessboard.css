@@ -126,7 +126,7 @@
 
 /* Ciemne pole */
 .square.dark {
-  background: radial-gradient(circle at 60% 60%, #08084f, #000424);
+  background: radial-gradient(circle at 60% 60%, #0d0d7f, #010c61);
 }
 
 /* NEON – wersja przyjazna wielu polom obok siebie */
