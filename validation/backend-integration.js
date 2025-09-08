@@ -207,7 +207,12 @@ function applyIncomingState(state, reason = "update", move) {
   }
 
   const isStartBoard = statesEqual(incoming, START_BOARD);
-  if (gameStarted && isStartBoard && !allowResetToStart) {
+  if (
+    gameStarted &&
+    isStartBoard &&
+    !allowResetToStart &&
+    reason !== "game_reset"
+  ) {
     console.warn(
       "[STATE]",
       reason,
@@ -278,6 +283,25 @@ window.addEventListener("DOMContentLoaded", () => {
   START_BOARD = { ...(window.boardState || {}) };
   gameStarted = false;
   allowResetToStart = false;
+  
+  // DODAJ PODSTAWOWE CLICK HANDLERY NA START
+  console.log("[INIT] Adding initial click handlers to chessboard");
+  addBasicClickHandlers();
+  
+  // AUTOMATYCZNY RESET PO ODŚWIEŻENIU STRONY
+  console.log("[INIT] Auto-reset after page refresh");
+  setTimeout(async () => {
+    try {
+      const res = await fetch(api("/restart"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      console.log("[INIT] Auto-reset completed:", data);
+    } catch (error) {
+      console.error("[INIT] Auto-reset failed:", error);
+    }
+  }, 1000); // Poczekaj 1 sekundę na inicjalizację
 
   // Reset – przycisk w panelu
   const btnReset = document.getElementById("btn-reset");
@@ -339,10 +363,94 @@ window.addEventListener("DOMContentLoaded", () => {
   eventSource.onerror = (error) =>
     console.error("[Mercure] ===== CONNECTION ERROR =====", error);
 
+  // Helper - dodaj podstawowy click handler do pojedynczego pola
+  function addBasicClickHandler(square) {
+    square.addEventListener("click", () => {
+      const coord = square.dataset.coord;
+      const piece = (window.boardState || {})[coord];
+
+      console.log(`[CLICK] Square: ${coord}, Piece: ${piece}, Previously selected: ${window.selectedSquare}`);
+
+      square.classList.add("clicked");
+      setTimeout(() => square.classList.remove("clicked"), 400);
+
+      if (piece) {
+        window.selectedSquare = coord;
+        console.log(`[CLICK] New selection: ${coord}`);
+
+        document.querySelectorAll(".square.active, .square.invalid")
+          .forEach((el) => el.classList.remove("active", "invalid"));
+        document.querySelector(`.square[data-coord="${coord}"]`)
+          ?.classList.add("active");
+
+        try {
+          if (window.selectSound) {
+            window.selectSound.currentTime = 0;
+            window.selectSound.play();
+          }
+        } catch (e) {}
+
+        if (typeof requestPossibleMoves === "function") {
+          requestPossibleMoves(coord);
+        }
+      } else {
+        window.selectedSquare = null;
+        document.querySelectorAll(".square.active, .square.invalid")
+          .forEach((el) => el.classList.remove("active", "invalid"));
+      }
+    });
+  }
+
+  // Helper - dodaj podstawowe click handlery do wszystkich pól
+  function addBasicClickHandlers() {
+    document.querySelectorAll(".square").forEach(addBasicClickHandler);
+  }
+  
+  // Eksportuj funkcję globalnie
+  window.addBasicClickHandler = addBasicClickHandler;
+
   // Helpery do resetu po stronie eventów
   function _applyResetState(state) {
     // Odblokuj guard – pozwól przyjąć FEN startowy
     allowResetToStart = true;
+
+    // Wyczyść cache duplikatów ruchów i stanów
+    if (window._processedMoves) {
+      console.log("[RESET] Clearing processed moves cache");
+      window._processedMoves.clear();
+    }
+    if (window._pendingMoves) {
+      console.log("[RESET] Clearing pending moves cache");
+      window._pendingMoves.clear();
+    }
+    
+    // Wyczyść wszystkie handlery ruchów z planszy - KOMPLETNIE!
+    console.log("[RESET] Clearing ALL move handlers and classes");
+    console.log("[RESET] Current _moveHandlers size:", window._moveHandlers ? window._moveHandlers.size : 'undefined');
+    
+    // Usuń wszystkie klasy i handlery z pól
+    document.querySelectorAll(".square").forEach(square => {
+      // Usuń klasy związane z ruchami
+      square.classList.remove("active", "move-target", "clicked", "selected");
+      
+      // Wyczyść wszystkie event listenery przez klonowanie elementu 
+      // (to usuwa WSZYSTKIE listenery dodane przez addEventListener)
+      const newSquare = square.cloneNode(true);
+      square.parentNode.replaceChild(newSquare, square);
+    });
+    
+    // Wyczyść mapę handlerów
+    if (window._moveHandlers) {
+      window._moveHandlers.clear();
+    }
+    
+    // Wyczyść selectedSquare
+    window.selectedSquare = null;
+    
+    // Ponownie dodaj podstawowe click handlery do pól (do wybierania figur)
+    addBasicClickHandlers();
+    window._lastProcessedState = null;
+    window._lastUIMove = null;
 
     // Czyszczenie UI
     try {
@@ -360,10 +468,24 @@ window.addEventListener("DOMContentLoaded", () => {
         window.updateTurnIndicator(state?.turn || "white");
     } catch (_) {}
 
-    // Wczytaj stan/FEN
+    // Wczytaj stan/FEN (BEZPOŚREDNIO, bez guard)
     try {
-      if (state) applyIncomingState(state, "game_reset");
-    } catch (_) {}
+      if (state?.fen) {
+        const resetBoard = fenToBoardState(state.fen);
+        window.boardState = resetBoard;
+        window.selectedSquare = null;
+        if (typeof window.renderBoard === "function") {
+          window.renderBoard(window.boardState);
+        }
+        console.log("[RESET] FEN bezpośrednio zastosowany:", state.fen);
+
+        // Reset flag
+        gameStarted = false;
+        allowResetToStart = false;
+      }
+    } catch (e) {
+      console.error("[RESET] Błąd przy ładowaniu FEN:", e);
+    }
 
     // Zamknij modal końcowy
     try {
@@ -415,6 +537,12 @@ window.addEventListener("DOMContentLoaded", () => {
           // Zapamiętaj przetworzony ruch
           if (!window._processedMoves) window._processedMoves = new Set();
           window._processedMoves.add(moveKey);
+          
+          // Usuń z pending moves - ruch został potwierdzony
+          if (window._pendingMoves) {
+            window._pendingMoves.delete(moveKey);
+            console.log(`[CONFIRMED] Removed ${moveKey} from pending moves`);
+          }
 
           // log + tura
           const nextTurn = data?.state?.turn; // tura PO ruchu
@@ -473,6 +601,13 @@ window.addEventListener("DOMContentLoaded", () => {
             console.log(
               "[Mercure] state/update wygląda jak reset → traktuję jak reset"
             );
+            
+            // Wyczyść cache przed aplikowaniem resetu
+            if (window._processedMoves) window._processedMoves.clear();
+            if (window._pendingMoves) window._pendingMoves.clear();
+            window._lastProcessedState = null;
+            window._lastUIMove = null;
+            
             _applyResetState(data);
             break;
           }
@@ -583,6 +718,13 @@ window.addEventListener("DOMContentLoaded", () => {
         case "game_reset": {
           clearTimeout(window._previewTimeout);
           window._previewTimeout = null;
+          
+          // Wyczyść wszystkie cache przed resetem
+          if (window._processedMoves) window._processedMoves.clear();
+          if (window._pendingMoves) window._pendingMoves.clear();
+          window._lastProcessedState = null;
+          window._lastUIMove = null;
+          
           console.log("[Mercure] game_reset:", data?.state);
           _applyResetState(data.state);
           break;
@@ -647,8 +789,16 @@ function sendMove(from, to) {
 
   const moveKey = `${from}-${to}`;
   if (!window._pendingMoves) window._pendingMoves = new Set();
-  if (window._pendingMoves.has(moveKey)) return;
+  
+  console.log(`[SEND] Attempting move ${moveKey}, pending moves:`, Array.from(window._pendingMoves));
+  
+  if (window._pendingMoves.has(moveKey)) {
+    console.log(`[SEND] Move ${moveKey} already pending - SKIPPING`);
+    return;
+  }
   window._pendingMoves.add(moveKey);
+  
+  console.log(`[SEND] Sending move ${moveKey} to backend`);
 
   fetch(api("/move"), {
     method: "POST",
@@ -670,9 +820,8 @@ function sendMove(from, to) {
     .catch((err) => {
       console.error("[API] Błąd sieci /move:", err);
       window.errorSound?.play?.();
-    })
-    .finally(() => {
-      window._pendingMoves.delete(moveKey);
+      // Usuń z pending przy błędzie
+      if (window._pendingMoves) window._pendingMoves.delete(moveKey);
     });
 }
 
