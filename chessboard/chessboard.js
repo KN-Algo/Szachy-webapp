@@ -528,10 +528,75 @@ window.capturePiece = function capturePiece(code) {
     "captured-piece " + (code[0] === "b" ? "is-black" : "is-white");
   img.draggable = false;
 
+  // Dodaj data-piece-type dla łatwego liczenia
+  wrap.setAttribute("data-piece-type", code);
+
   wrap.appendChild(img);
 
   const target = code[0] === "w" ? opp : me;
   target.appendChild(wrap);
+};
+
+// Funkcja do obliczania dostępnych figur do promocji na podstawie zbitych
+window.getAvailablePromotionPieces = function (playerColor) {
+  const capturedContainer = document.getElementById(
+    playerColor === "w" ? "captured-opponent" : "captured-player"
+  );
+  if (!capturedContainer) return ["queen", "rook", "bishop", "knight"]; // fallback
+
+  // Zbierz wszystkie zbite figury tego koloru
+  const capturedPieces = Array.from(
+    capturedContainer.querySelectorAll("[data-piece-type]")
+  )
+    .map((el) => el.getAttribute("data-piece-type"))
+    .filter((code) => code && code[0] === playerColor);
+
+  // Policz ile mamy każdego typu (z uwzględnieniem figur startowych)
+  const startingCounts = {
+    [`${playerColor}q`]: 1, // 1 dama na start
+    [`${playerColor}r`]: 2, // 2 wieże na start
+    [`${playerColor}b`]: 2, // 2 gońce na start
+    [`${playerColor}n`]: 2, // 2 skoczki na start
+  };
+
+  // Policz ile mamy na planszy (z boardState)
+  const onBoard = Object.values(window.boardState || {});
+  const currentCounts = {
+    [`${playerColor}q`]: onBoard.filter((p) => p === `${playerColor}q`).length,
+    [`${playerColor}r`]: onBoard.filter((p) => p === `${playerColor}r`).length,
+    [`${playerColor}b`]: onBoard.filter((p) => p === `${playerColor}b`).length,
+    [`${playerColor}n`]: onBoard.filter((p) => p === `${playerColor}n`).length,
+  };
+
+  // Debug log
+  console.log(`[PROMO] Debug dla koloru ${playerColor}:`);
+  console.log(`[PROMO] Zbite figury:`, capturedPieces);
+  console.log(`[PROMO] Na planszy:`, currentCounts);
+  console.log(`[PROMO] Stan planszy:`, window.boardState);
+
+  // Oblicz dostępne figury (startowe - na planszy + zbite)
+  const available = [];
+
+  Object.entries(startingCounts).forEach(([pieceCode, startCount]) => {
+    const currentCount = currentCounts[pieceCode] || 0;
+    const capturedCount = capturedPieces.filter((p) => p === pieceCode).length;
+    const availableCount = startCount - currentCount + capturedCount;
+
+    console.log(
+      `[PROMO] ${pieceCode}: start=${startCount}, current=${currentCount}, captured=${capturedCount}, available=${availableCount}`
+    );
+
+    if (availableCount > 0) {
+      const pieceType = pieceCode.substring(1); // usuń prefix koloru
+      const pieceNameMap = { q: "queen", r: "rook", b: "bishop", n: "knight" };
+      available.push(pieceNameMap[pieceType]);
+    }
+  });
+
+  console.log(`[PROMO] Dostępne figury do promocji:`, available);
+
+  // Jeśli brak dostępnych figur, zwróć damę jako fallback (ostatnia szansa)
+  return available.length > 0 ? available : ["queen"];
 };
 
 // --- Statusy/badge ---
@@ -696,5 +761,17 @@ window.errorSound = errorSound;
 window.selectSound = selectSound;
 window.capturePiece = capturePiece;
 window.getPieceTeam = getPieceTeam;
+
+// --- Indykator tury ---
+window.updateTurnIndicator = function (turn) {
+  const indicator = document.getElementById("turn-indicator");
+  if (!indicator) return;
+
+  indicator.className = `turn-indicator ${turn}`;
+  const label = indicator.querySelector(".label");
+  if (label) {
+    label.textContent = turn === "white" ? "Białe" : "Czarne";
+  }
+};
 
 // ===============================

@@ -532,6 +532,12 @@ window.addEventListener("DOMContentLoaded", () => {
       switch (data.type) {
         case "possible_moves": {
           console.log("[Mercure] possible_moves:", data.position, data.moves);
+
+          // Przekaż dane do modułu promocji (jeśli istnieje)
+          if (typeof window.Promotion?.onPossibleMoves === "function") {
+            window.Promotion.onPossibleMoves(data.position, data.moves || []);
+          }
+
           if (typeof window.highlightPossibleMoves === "function")
             window.highlightPossibleMoves(data.position, data.moves || []);
           break;
@@ -583,6 +589,12 @@ window.addEventListener("DOMContentLoaded", () => {
           }
 
           applyIncomingState(data.state, "move_confirmed", data.move);
+
+          // Zamknij modal promocji po potwierdzeniu ruchu
+          if (typeof window.Promotion?.close === "function") {
+            window.Promotion.close();
+          }
+
           try {
             window.moveSound?.play?.();
           } catch (_) {}
