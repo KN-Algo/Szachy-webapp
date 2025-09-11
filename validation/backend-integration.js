@@ -283,11 +283,11 @@ window.addEventListener("DOMContentLoaded", () => {
   START_BOARD = { ...(window.boardState || {}) };
   gameStarted = false;
   allowResetToStart = false;
-  
+
   // DODAJ PODSTAWOWE CLICK HANDLERY NA START
   console.log("[INIT] Adding initial click handlers to chessboard");
   addBasicClickHandlers();
-  
+
   // AUTOMATYCZNY RESET PO ODŚWIEŻENIU STRONY
   console.log("[INIT] Auto-reset after page refresh");
   setTimeout(async () => {
@@ -369,7 +369,9 @@ window.addEventListener("DOMContentLoaded", () => {
       const coord = square.dataset.coord;
       const piece = (window.boardState || {})[coord];
 
-      console.log(`[CLICK] Square: ${coord}, Piece: ${piece}, Previously selected: ${window.selectedSquare}`);
+      console.log(
+        `[CLICK] Square: ${coord}, Piece: ${piece}, Previously selected: ${window.selectedSquare}`
+      );
 
       square.classList.add("clicked");
       setTimeout(() => square.classList.remove("clicked"), 400);
@@ -378,9 +380,11 @@ window.addEventListener("DOMContentLoaded", () => {
         window.selectedSquare = coord;
         console.log(`[CLICK] New selection: ${coord}`);
 
-        document.querySelectorAll(".square.active, .square.invalid")
+        document
+          .querySelectorAll(".square.active, .square.invalid")
           .forEach((el) => el.classList.remove("active", "invalid"));
-        document.querySelector(`.square[data-coord="${coord}"]`)
+        document
+          .querySelector(`.square[data-coord="${coord}"]`)
           ?.classList.add("active");
 
         try {
@@ -395,7 +399,8 @@ window.addEventListener("DOMContentLoaded", () => {
         }
       } else {
         window.selectedSquare = null;
-        document.querySelectorAll(".square.active, .square.invalid")
+        document
+          .querySelectorAll(".square.active, .square.invalid")
           .forEach((el) => el.classList.remove("active", "invalid"));
       }
     });
@@ -405,7 +410,7 @@ window.addEventListener("DOMContentLoaded", () => {
   function addBasicClickHandlers() {
     document.querySelectorAll(".square").forEach(addBasicClickHandler);
   }
-  
+
   // Eksportuj funkcję globalnie
   window.addBasicClickHandler = addBasicClickHandler;
 
@@ -423,30 +428,33 @@ window.addEventListener("DOMContentLoaded", () => {
       console.log("[RESET] Clearing pending moves cache");
       window._pendingMoves.clear();
     }
-    
+
     // Wyczyść wszystkie handlery ruchów z planszy - KOMPLETNIE!
     console.log("[RESET] Clearing ALL move handlers and classes");
-    console.log("[RESET] Current _moveHandlers size:", window._moveHandlers ? window._moveHandlers.size : 'undefined');
-    
+    console.log(
+      "[RESET] Current _moveHandlers size:",
+      window._moveHandlers ? window._moveHandlers.size : "undefined"
+    );
+
     // Usuń wszystkie klasy i handlery z pól
-    document.querySelectorAll(".square").forEach(square => {
+    document.querySelectorAll(".square").forEach((square) => {
       // Usuń klasy związane z ruchami
       square.classList.remove("active", "move-target", "clicked", "selected");
-      
-      // Wyczyść wszystkie event listenery przez klonowanie elementu 
+
+      // Wyczyść wszystkie event listenery przez klonowanie elementu
       // (to usuwa WSZYSTKIE listenery dodane przez addEventListener)
       const newSquare = square.cloneNode(true);
       square.parentNode.replaceChild(newSquare, square);
     });
-    
+
     // Wyczyść mapę handlerów
     if (window._moveHandlers) {
       window._moveHandlers.clear();
     }
-    
+
     // Wyczyść selectedSquare
     window.selectedSquare = null;
-    
+
     // Ponownie dodaj podstawowe click handlery do pól (do wybierania figur)
     addBasicClickHandlers();
     window._lastProcessedState = null;
@@ -537,7 +545,7 @@ window.addEventListener("DOMContentLoaded", () => {
           // Zapamiętaj przetworzony ruch
           if (!window._processedMoves) window._processedMoves = new Set();
           window._processedMoves.add(moveKey);
-          
+
           // Usuń z pending moves - ruch został potwierdzony
           if (window._pendingMoves) {
             window._pendingMoves.delete(moveKey);
@@ -601,13 +609,13 @@ window.addEventListener("DOMContentLoaded", () => {
             console.log(
               "[Mercure] state/update wygląda jak reset → traktuję jak reset"
             );
-            
+
             // Wyczyść cache przed aplikowaniem resetu
             if (window._processedMoves) window._processedMoves.clear();
             if (window._pendingMoves) window._pendingMoves.clear();
             window._lastProcessedState = null;
             window._lastUIMove = null;
-            
+
             _applyResetState(data);
             break;
           }
@@ -718,13 +726,13 @@ window.addEventListener("DOMContentLoaded", () => {
         case "game_reset": {
           clearTimeout(window._previewTimeout);
           window._previewTimeout = null;
-          
+
           // Wyczyść wszystkie cache przed resetem
           if (window._processedMoves) window._processedMoves.clear();
           if (window._pendingMoves) window._pendingMoves.clear();
           window._lastProcessedState = null;
           window._lastUIMove = null;
-          
+
           console.log("[Mercure] game_reset:", data?.state);
           _applyResetState(data.state);
           break;
@@ -789,15 +797,18 @@ function sendMove(from, to) {
 
   const moveKey = `${from}-${to}`;
   if (!window._pendingMoves) window._pendingMoves = new Set();
-  
-  console.log(`[SEND] Attempting move ${moveKey}, pending moves:`, Array.from(window._pendingMoves));
-  
+
+  console.log(
+    `[SEND] Attempting move ${moveKey}, pending moves:`,
+    Array.from(window._pendingMoves)
+  );
+
   if (window._pendingMoves.has(moveKey)) {
     console.log(`[SEND] Move ${moveKey} already pending - SKIPPING`);
     return;
   }
   window._pendingMoves.add(moveKey);
-  
+
   console.log(`[SEND] Sending move ${moveKey} to backend`);
 
   fetch(api("/move"), {

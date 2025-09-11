@@ -553,38 +553,48 @@ window._moveHandlers = window._moveHandlers || new Map();
 // --- Podświetlanie możliwych ruchów ---
 window.highlightPossibleMoves = function (origin, moves) {
   renderBoard(window.boardState);
-  
-  console.log(`[HIGHLIGHT] Clearing ALL move handlers before highlighting ${origin}`);
-  console.log(`[HIGHLIGHT] Current _moveHandlers size:`, window._moveHandlers ? window._moveHandlers.size : 'undefined');
-  
+
+  console.log(
+    `[HIGHLIGHT] Clearing ALL move handlers before highlighting ${origin}`
+  );
+  console.log(
+    `[HIGHLIGHT] Current _moveHandlers size:`,
+    window._moveHandlers ? window._moveHandlers.size : "undefined"
+  );
+
   // Usuń wszystkie poprzednie handlery ruchów ze WSZYSTKICH pól
   if (window._moveHandlers) {
     window._moveHandlers.forEach((handler, element) => {
       console.log(`[HIGHLIGHT] Removing handler from:`, element.dataset?.coord);
-      element.removeEventListener('click', handler);
+      element.removeEventListener("click", handler);
     });
     window._moveHandlers.clear();
-    console.log(`[HIGHLIGHT] Handlers cleared, new size:`, window._moveHandlers.size);
+    console.log(
+      `[HIGHLIGHT] Handlers cleared, new size:`,
+      window._moveHandlers.size
+    );
   }
-  
+
   // Wyczyść klasy ze wszystkich pól (nie tylko .active/.move-target)
   document.querySelectorAll(".square").forEach((el) => {
     el.classList.remove("active", "move-target");
     el.onclick = null;
   });
-  
+
   // BRUTALNE CZYSZCZENIE: Sklonuj wszystkie pola żeby usunąć WSZYSTKIE event listenery
   // (ale zachowaj podstawowe handlery wyboru figur)
-  console.log(`[HIGHLIGHT] BRUTAL CLEANUP - cloning squares to remove all move handlers`);
+  console.log(
+    `[HIGHLIGHT] BRUTAL CLEANUP - cloning squares to remove all move handlers`
+  );
   document.querySelectorAll(".square").forEach((square) => {
     // Zachowaj podstawowe dane
     const coord = square.dataset.coord;
     const classes = Array.from(square.classList);
     const innerHTML = square.innerHTML;
-    
+
     // Sklonuj element (usuwa wszystkie event listenery)
     const newSquare = square.cloneNode(true);
-    
+
     // Przywróć podstawowy click handler (wybór figur) - użyj globalnej funkcji
     if (typeof window.addBasicClickHandler === "function") {
       window.addBasicClickHandler(newSquare);
@@ -593,36 +603,41 @@ window.highlightPossibleMoves = function (origin, moves) {
       newSquare.addEventListener("click", () => {
         const coord = newSquare.dataset.coord;
         const piece = (window.boardState || {})[coord];
-        console.log(`[CLICK] Square: ${coord}, Piece: ${piece}, Previously selected: ${window.selectedSquare}`);
+        console.log(
+          `[CLICK] Square: ${coord}, Piece: ${piece}, Previously selected: ${window.selectedSquare}`
+        );
         newSquare.classList.add("clicked");
         setTimeout(() => newSquare.classList.remove("clicked"), 400);
-        
+
         if (piece) {
           window.selectedSquare = coord;
           console.log(`[CLICK] New selection: ${coord}`);
-          document.querySelectorAll(".square.active, .square.invalid")
+          document
+            .querySelectorAll(".square.active, .square.invalid")
             .forEach((el) => el.classList.remove("active", "invalid"));
-          document.querySelector(`.square[data-coord="${coord}"]`)
+          document
+            .querySelector(`.square[data-coord="${coord}"]`)
             ?.classList.add("active");
-          
+
           try {
             if (window.selectSound) {
               window.selectSound.currentTime = 0;
               window.selectSound.play();
             }
           } catch (e) {}
-          
+
           if (typeof requestPossibleMoves === "function") {
             requestPossibleMoves(coord);
           }
         } else {
           window.selectedSquare = null;
-          document.querySelectorAll(".square.active, .square.invalid")
+          document
+            .querySelectorAll(".square.active, .square.invalid")
             .forEach((el) => el.classList.remove("active", "invalid"));
         }
       });
     }
-    
+
     // Zastąp stary element
     square.parentNode.replaceChild(newSquare, square);
   });
@@ -642,10 +657,12 @@ window.highlightPossibleMoves = function (origin, moves) {
       if (typeof sendMove === "function") sendMove(origin, to);
       // Usuń handler po użyciu - zarówno z mapy jak i z elementu
       console.log(`[MOVE CLICK] Removing handler from ${to} after use`);
-      el.removeEventListener('click', handler);
+      el.removeEventListener("click", handler);
       window._moveHandlers.delete(el);
     };
-    console.log(`[HIGHLIGHT] Adding move handler: ${origin} → ${to} to square ${to}`);
+    console.log(
+      `[HIGHLIGHT] Adding move handler: ${origin} → ${to} to square ${to}`
+    );
     el.addEventListener("click", handler);
     window._moveHandlers.set(el, handler);
   });
