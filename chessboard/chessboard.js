@@ -606,6 +606,13 @@ window.highlightPossibleMoves = function (origin, moves) {
         console.log(
           `[CLICK] Square: ${coord}, Piece: ${piece}, Previously selected: ${window.selectedSquare}`
         );
+
+        // Usuń klasę "clicked" ze wszystkich pól przed dodaniem do bieżącego
+        document.querySelectorAll(".square.clicked").forEach((el) => {
+          el.classList.remove("clicked");
+        });
+
+        // Dodaj efekt migania tylko do klikniętego pola
         newSquare.classList.add("clicked");
         setTimeout(() => newSquare.classList.remove("clicked"), 400);
 

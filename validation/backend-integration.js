@@ -373,6 +373,12 @@ window.addEventListener("DOMContentLoaded", () => {
         `[CLICK] Square: ${coord}, Piece: ${piece}, Previously selected: ${window.selectedSquare}`
       );
 
+      // Usuń klasę "clicked" ze wszystkich pól przed dodaniem do bieżącego
+      document.querySelectorAll(".square.clicked").forEach((el) => {
+        el.classList.remove("clicked");
+      });
+
+      // Dodaj efekt migania tylko do klikniętego pola
       square.classList.add("clicked");
       setTimeout(() => square.classList.remove("clicked"), 400);
 
