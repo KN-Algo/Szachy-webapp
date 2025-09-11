@@ -1,7 +1,9 @@
 <?php
 // index.php – główny kontener aplikacji (nowy layout + tło)
-?><!DOCTYPE html>
+?>
+<!DOCTYPE html>
 <html lang="pl">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,13 +14,13 @@
   <link rel="stylesheet" href="./chessboard/chessboard.css" />
 
   <script>
-  // Adres Twojego backendu Symfony (Docker/localhost)
-  window.CHESS_BACKEND_URL = 'http://127.0.0.1:8000';
-</script>
+    // Adres Twojego backendu Symfony (Docker/localhost)
+    window.CHESS_BACKEND_URL = 'http://127.0.0.1:8000';
+  </script>
 
 </head>
-<body>
 
+<body>
   <!-- TŁO: particles (pełny ekran, pod całym layoutem) -->
   <canvas id="bgParticles" aria-hidden="true"></canvas>
 
@@ -55,7 +57,13 @@
           <h3>Logi ruchów</h3>
           <div class="logs-wrap">
             <table class="moves-table">
-              <thead><tr><th>#</th><th>Białe</th><th>Czarne</th></tr></thead>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Białe</th>
+                  <th>Czarne</th>
+                </tr>
+              </thead>
               <tbody id="moves-tbody"></tbody>
             </table>
           </div>
@@ -66,7 +74,7 @@
           <div class="panel-card status-card">
             <h3>Status</h3>
             <div class="status-badges">
-              <span id="status-raspi"  class="badge badge-muted">RPi: —</span>
+              <span id="status-raspi" class="badge badge-muted">RPi: —</span>
               <span id="status-engine" class="badge badge-muted">Silnik: —</span>
             </div>
           </div>
@@ -94,6 +102,8 @@
 
   <!-- Skrypty -->
   <script src="./chessboard/chessboard.js"></script>
+  <script src="./promotion.js"></script>
   <script src="./validation/backend-integration.js"></script>
 </body>
+
 </html>
