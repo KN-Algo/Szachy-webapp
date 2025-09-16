@@ -181,6 +181,20 @@ function initialMissingPieces(nextBoard) {
 }
 
 /* ========================================================================== */
+/*  PODŚWIETLENIE KRÓLA W SZACHU – BRIDGE DO chessboard.js                    */
+/* ========================================================================== */
+
+/**
+ * Spina backendowy `state` (z polami `in_check`, `check_player`) z helperem
+ * `window.applyCheckHighlightFromState` z chessboard.js.
+ * Akceptuje zarówno payloady w formie { state: {...} } jak i same { ... }.
+ */
+function updateCheckHighlight(payload) {
+  const st = payload && payload.state ? payload.state : payload;
+  window.applyCheckHighlightFromState?.(st);
+}
+
+/* ========================================================================== */
 /*  BEZPIECZNIK „NIE RESETUJ DO STARTU”                                       */
 /* ========================================================================== */
 
@@ -331,6 +345,9 @@ window.addEventListener("DOMContentLoaded", () => {
         applyIncomingState(state, "/state");
         console.log("[API] Stan początkowy pobrany.");
 
+        // --- PODŚWIETLENIE KRÓLA W SZACHU (start) ---
+        updateCheckHighlight(state);
+
         // Jednorazowo uzupełnij „zbite” brakami względem startu (zimny start w środku partii)
         try {
           if (!window.__initialCapturesFilled) {
@@ -444,11 +461,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // Usuń wszystkie klasy i handlery z pól
     document.querySelectorAll(".square").forEach((square) => {
-      // Usuń klasy związane z ruchami
       square.classList.remove("active", "move-target", "clicked", "selected");
 
-      // Wyczyść wszystkie event listenery przez klonowanie elementu
-      // (to usuwa WSZYSTKIE listenery dodane przez addEventListener)
       const newSquare = square.cloneNode(true);
       square.parentNode.replaceChild(newSquare, square);
     });
@@ -482,6 +496,9 @@ window.addEventListener("DOMContentLoaded", () => {
         window.updateTurnIndicator(state?.turn || "white");
     } catch (_) {}
 
+    // Dodatkowo wyczyść ewentualny neon szacha
+    window.clearKingInCheck?.();
+
     // Wczytaj stan/FEN (BEZPOŚREDNIO, bez guard)
     try {
       if (state?.fen) {
@@ -496,6 +513,9 @@ window.addEventListener("DOMContentLoaded", () => {
         // Reset flag
         gameStarted = false;
         allowResetToStart = false;
+
+        // Po renderze – dla porządku przelicz highlight z aktualnego stanu (zwykle off)
+        updateCheckHighlight(state);
       }
     } catch (e) {
       console.error("[RESET] Błąd przy ładowaniu FEN:", e);
@@ -590,6 +610,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
           applyIncomingState(data.state, "move_confirmed", data.move);
 
+          // --- PODŚWIETLENIE KRÓLA W SZACHU ---
+          updateCheckHighlight(data.state);
+
           // Zamknij modal promocji po potwierdzeniu ruchu
           if (typeof window.Promotion?.close === "function") {
             window.Promotion.close();
@@ -640,7 +663,11 @@ window.addEventListener("DOMContentLoaded", () => {
 
           if (data?.turn && typeof window.updateTurnIndicator === "function")
             window.updateTurnIndicator(data.turn);
-          applyIncomingState(data, "state/update"); // tu fallback liczeniowy, jeśli brak move
+          applyIncomingState(data, "state/update");
+
+          // --- PODŚWIETLENIE KRÓLA W SZACHU ---
+          updateCheckHighlight(data);
+
           break;
         }
 
@@ -677,6 +704,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
           if (data?.state?.fen)
             applyIncomingState(data.state, "ai_move_executed", data.move);
+
+          // --- PODŚWIETLENIE KRÓLA W SZACHU ---
+          updateCheckHighlight(data.state);
+
           try {
             window.moveSound?.play?.();
           } catch (_) {}
@@ -753,6 +784,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
           console.log("[Mercure] game_reset:", data?.state);
           _applyResetState(data.state);
+
+          // --- Wyczyść podświetlenie szacha ---
+          window.clearKingInCheck?.();
+
           break;
         }
 
@@ -885,6 +920,9 @@ function sendMove(from, to) {
       if (typeof window.updateTurnIndicator === "function")
         window.updateTurnIndicator("white");
     } catch (_) {}
+
+    // Dodatkowo: zdejmij ewentualny neon szacha
+    window.clearKingInCheck?.();
 
     // Wyślij żądanie do backendu
     try {

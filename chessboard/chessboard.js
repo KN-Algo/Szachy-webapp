@@ -82,9 +82,76 @@ function capturePiece(code) {
 }
 
 // ===============================
+//  [KING IN CHECK] – helpery
+// ===============================
+let __kingCheckSquareId = null;
+
+/** Znajdź pole króla danego koloru (white|black) na podstawie window.boardState. */
+window.findKingSquare = function (color) {
+  const kingCode = color === "white" ? "wk" : "bk";
+  for (const coord in window.boardState) {
+    if (window.boardState[coord] === kingCode) return coord;
+  }
+  return null;
+};
+
+/** Wyczyść neonowe podświetlenie króla (jeśli jest). */
+window.clearKingInCheck = function () {
+  if (__kingCheckSquareId) {
+    const prev = document.querySelector(
+      `.square[data-coord="${__kingCheckSquareId}"]`
+    );
+    if (prev) prev.classList.remove("king-in-check");
+    __kingCheckSquareId = null;
+  } else {
+    document
+      .querySelectorAll(".square.king-in-check")
+      .forEach((el) => el.classList.remove("king-in-check"));
+  }
+};
+
+/** Podświetl neonowo podane pole jako króla w szachu. */
+window.highlightKingInCheck = function (square) {
+  window.clearKingInCheck(); // Wyczyść poprzednie podświetlenia
+  if (!square) return;
+  const kingSquare = document.querySelector(`.square[data-coord="${square}"]`);
+  if (kingSquare) {
+    kingSquare.classList.add("king-in-check");
+    __kingCheckSquareId = square;
+  }
+};
+
+/**
+ * Zastosuj/wyczyść highlight na podstawie state.in_check & state.check_player
+ * Wywołuj po applyIncomingState(...) w backend-integration.js:
+ *   window.applyCheckHighlightFromState?.(data.state);
+ */
+window.applyCheckHighlightFromState = function (state) {
+  if (!state || !state.in_check) {
+    window.clearKingInCheck();
+    return;
+  }
+  const player =
+    state.check_player === "white" || state.check_player === "black"
+      ? state.check_player
+      : null;
+  if (!player) {
+    window.clearKingInCheck();
+    return;
+  }
+  const sq = window.findKingSquare(player);
+  if (sq) window.highlightKingInCheck(sq);
+  else window.clearKingInCheck();
+};
+
+// ===============================
 //  RENDEROWANIE PLANSZY (z obiektu `window.boardState`)
 // ===============================
 function renderBoard(state) {
+  // Na starcie renderu czyścimy neon – backend-integration po renderze
+  // natychmiast przywróci właściwy highlight przez applyCheckHighlightFromState(state).
+  window.clearKingInCheck();
+
   document.querySelectorAll(".square").forEach((square) => {
     const coord = square.dataset.coord;
     square.innerHTML = "";
@@ -574,7 +641,7 @@ window.getAvailablePromotionPieces = function (playerColor) {
   console.log(`[PROMO] Na planszy:`, currentCounts);
   console.log(`[PROMO] Stan planszy:`, window.boardState);
 
-  // Oblicz dostępne figury (startowe - na planszy + zbite)
+  // Oblicz dostępne figury (startowe - na plansze + zbite)
   const available = [];
 
   Object.entries(startingCounts).forEach(([pieceCode, startCount]) => {
@@ -773,5 +840,3 @@ window.updateTurnIndicator = function (turn) {
     label.textContent = turn === "white" ? "Białe" : "Czarne";
   }
 };
-
-// ===============================

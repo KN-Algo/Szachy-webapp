@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap');
 
-
 :root {
   --dark: #000424;
   --light: #fff2f0;
@@ -25,8 +24,6 @@
   grid-template-rows: 28px repeat(8, var(--square-size)) 28px;
 
   --border-angle: 0turn;
-
- 
 
   background:
     conic-gradient(
@@ -58,11 +55,9 @@
   position: relative;
   z-index: 1;
   border: 4px #0d6efd solid;
-    border-radius: 20px;
-    box-shadow: 0 0 20px #0d6efd;
+  border-radius: 20px;
+  box-shadow: 0 0 20px #0d6efd;
 }
-
-
 
 /* Napisy A–H */
 .chessboard-container .legend-letter {
@@ -78,8 +73,6 @@
   user-select: none;
 }
 
-
-
 /* Napisy 1–8 */
 .chessboard-container .legend-number {
   display: flex;
@@ -92,19 +85,14 @@
   user-select: none;
 }
 
-
 @keyframes bg-spin {
-  to {
-    --border-angle: 1turn;
-  }
+  to { --border-angle: 1turn; }
 }
-
 @property --border-angle {
   syntax: "<angle>";
   inherits: true;
   initial-value: 0turn;
 }
-
 
 /* Główne pole szachownicy */
 .square {
@@ -143,8 +131,8 @@
     0 0 2px rgba(0,246,255,.9) inset;
   animation: neon-tight 1100ms ease-in-out infinite;
   pointer-events:none;
-  z-index:2;
-  mix-blend-mode: screen;    /* pomaga na kontrast na ciemnych i jasnych polach */
+  z-index:2;                 /* ważne: highlight ruchu jest pod neonem króla */
+  mix-blend-mode: screen;
 }
 
 /* puls o małej amplitudzie – nie „rozlewa” się */
@@ -160,21 +148,14 @@
 
 /* Wzmocnienie obramówki NA JASNYCH POLACH */
 .square.light.active::after {
-  /* wyłącz mieszanie, które gasi efekt na białym tle */
   mix-blend-mode: normal;
-
-  /* wyraźny kontur + delikatny ciemny „kontrapierścień” pod spodem */
   border: 3px solid #00f6ff;
   box-shadow:
-    0 0 0 6px rgba(0, 4, 36, 0.55),   /* półciemny ring dla kontrastu na białym */
-    0 0 12px rgba(0, 246, 255, .75),  /* krótki glow, żeby się nie zlewał z sąsiednimi */
+    0 0 0 6px rgba(0, 4, 36, 0.55),
+    0 0 12px rgba(0, 246, 255, .75),
     0 0 3px rgba(0, 246, 255, .9) inset;
-
-  /* jeśli Twoja wersja ma większy odstęp – dostosuj, ale zwykle 4–5px działa idealnie */
   inset: 4px;
 }
-
-
 
 .square.clicked::before {
   content: "";
@@ -192,31 +173,16 @@
 
 /* Animacja: aktywne pulsowanie */
 @keyframes active-glow {
-  0% {
-    box-shadow: 0 0 0 2px #00f6ff, 0 0 10px 4px rgba(0, 246, 255, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 0 2px #00f6ff, 0 0 18px 8px rgba(0, 246, 255, 0.3);
-  }
-  100% {
-    box-shadow: 0 0 0 2px #00f6ff, 0 0 10px 4px rgba(0, 246, 255, 0.5);
-  }
+  0% { box-shadow: 0 0 0 2px #00f6ff, 0 0 10px 4px rgba(0, 246, 255, 0.5); }
+  50% { box-shadow: 0 0 0 2px #00f6ff, 0 0 18px 8px rgba(0, 246, 255, 0.3); }
+  100% { box-shadow: 0 0 0 2px #00f6ff, 0 0 10px 4px rgba(0, 246, 255, 0.5); }
 }
 
 /* Animacja: kliknięcie – krótki błysk */
 @keyframes click-ping {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.3;
-  }
-  100% {
-    transform: scale(1.05);
-    opacity: 0;
-  }
+  0% { transform: scale(0.8); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 0.3; }
+  100% { transform: scale(1.05); opacity: 0; }
 }
 
 .square img.chess-piece {
@@ -231,14 +197,12 @@
 }
 
 .piece.black img {
-  filter: brightness(1.2) drop-shadow(0 0 2px #000000); 
+  filter: brightness(1.2) drop-shadow(0 0 2px #000000);
 }
-
 
 .square img {
   filter: drop-shadow(0 0 3px #000000aa);
 }
-
 
 .square.invalid::after {
   content: "";
@@ -253,24 +217,12 @@
 }
 
 @keyframes invalid-flash {
-  0% {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1);
-  }
+  0% { opacity: 0; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1); }
 }
 
-
-
-
-
+/* Layout wierszowy: plansza + placeholdery */
 .chessboard-wrapper-row {
   display: flex;
   flex-direction: row;
@@ -279,7 +231,6 @@
   padding: 20px;
   justify-content: center;
 }
-
 
 .captured {
   width: 100%;
@@ -292,8 +243,8 @@
   padding: 10px;
   background-color: #000424;
   border: 4px #0d6efd solid;
-    border-radius: 20px;
-    box-shadow: 0 0 20px #0d6efd;
+  border-radius: 20px;
+  box-shadow: 0 0 20px #0d6efd;
   flex-shrink: 0;
 }
 
@@ -313,9 +264,8 @@
   color: #fff2f0;
   text-align: center;
   opacity: 0.75;
-  margin-bottom: 2px; 
+  margin-bottom: 2px;
 }
-
 
 .captured-slot {
   width: 36px;
@@ -332,8 +282,6 @@
   filter: drop-shadow(0 0 2px #00000088);
 }
 
-
-
 .slot {
   width: 32px;
   height: 32px;
@@ -342,13 +290,165 @@
   justify-content: center;
 }
 
-
 /* Lepsza widoczność figur na ciemnych polach */
 .square.dark img.chess-piece,
 .square.dark .piece.black img {
-  /* nadpisujemy poprzedni filter (ostatnia reguła wygrywa) */
   filter:
     brightness(1.35) contrast(1.05)
-    drop-shadow(0 0 0.75px rgba(255, 242, 240, 0.85))  /* cienki jasny kontur */
-    drop-shadow(0 0 4px rgba(255, 242, 240, 0.25));    /* delikatny glow pod kontrast */
+    drop-shadow(0 0 0.75px rgba(255, 242, 240, 0.85))
+    drop-shadow(0 0 4px rgba(255, 242, 240, 0.25));
+}
+
+/* ======================= */
+/*  KRÓL W SZACHU — NEON   */
+/* ======================= */
+/* Warstwa nad wszystkimi innymi highlightami (z wyjątkiem kliknięcia),
+   nie zmienia rozmiaru pola i nie koliduje z .square.active::after */
+.square.king-in-check { position: relative; }
+
+.square.king-in-check::before {
+  content: "";
+  position: absolute;
+  inset: 3px;                   /* minimalny margines od krawędzi pola */
+  border-radius: 10px;
+  border: 2px solid #ff0033;    /* neonowa czerwień */
+  box-shadow:
+    0 0 12px #ffffff,           /* jasny halo */
+    0 0 8px rgba(255, 0, 51, .9),
+    0 0 22px rgba(255, 0, 51, .85),
+    0 0 42px rgba(255, 0, 51, .8);
+  animation: king-neon-pulse 1.2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 4;                   /* ponad .active::after (z-index:2) i kliknięciem (3) */
+  will-change: box-shadow, transform;
+  mix-blend-mode: screen;       /* dobrze wygląda na ciemnych polach */
+}
+
+/* Na jasnych polach wzmacniamy kontrast i wyłączamy blend */
+.square.light.king-in-check::before {
+  mix-blend-mode: normal;
+  box-shadow:
+    0 0 0 6px rgba(0, 4, 36, 0.55), /* kontrastowy ciemny ring pod spodem */
+    0 0 16px rgba(255, 0, 51, .95),
+    0 0 34px rgba(255, 0, 51, .9),
+    0 0 56px rgba(255, 0, 51, .85);
+}
+
+/* Gdy jednocześnie pole jest aktywne (podświetlenie ruchu), zachowujemy fokus króla */
+.square.king-in-check.active::after {
+  /* nie podbijaj z-index – król ma nadrzędną warstwę ::before */
+  opacity: .9;
+  filter: saturate(0.7) brightness(0.9);
+}
+
+@keyframes king-neon-pulse {
+  0% {
+    box-shadow:
+      0 0 10px #ffffff,
+      0 0 8px rgba(255, 0, 51, .85),
+      0 0 20px rgba(255, 0, 51, .8),
+      0 0 36px rgba(255, 0, 51, .75);
+    transform: translateZ(0);
+  }
+  50% {
+    box-shadow:
+      0 0 16px #ffffff,
+      0 0 14px rgba(255, 0, 51, 1),
+      0 0 34px rgba(255, 0, 51, .95),
+      0 0 64px rgba(255, 0, 51, .9);
+  }
+  100% {
+    box-shadow:
+      0 0 10px #ffffff,
+      0 0 8px rgba(255, 0, 51, .85),
+      0 0 20px rgba(255, 0, 51, .8),
+      0 0 36px rgba(255, 0, 51, .75);
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .square.king-in-check::before { animation: none; }
+}
+
+
+/* === WARSTWY / Z-INDEX: upewnij się, że każdy kafelek ma bazowy kontekst === */
+.square {
+  position: relative;
+  z-index: 1;           /* baza dla wszystkich pól */
+  overflow: visible;    /* puls może wyjść lekko poza pole */
+}
+
+/* Kliknięcie i highlight ruchów wciąż niżej niż król w szachu */
+.square.clicked::before { z-index: 3; }
+.square.active::after { z-index: 2; }
+
+/* === KRÓL W SZACHU — MOCNIEJSZY, NAD WSZYSTKIM === */
+.square.king-in-check {
+  z-index: 100;         /* <<< klucz: całe pole nad sąsiadami */
+}
+
+.square.king-in-check::before {
+  content: "";
+  position: absolute;
+  inset: 2.5px;                 /* minimalny margines */
+  border-radius: 10px;
+  border: 3px solid #ff0000;    /* MOCNO czerwony */
+  box-shadow:
+    0 0 14px #ffffff,
+    0 0 10px rgba(255, 0, 0, 1),
+    0 0 28px rgba(255, 0, 0, .95),
+    0 0 64px rgba(255, 0, 0, .9);
+  animation: king-neon-pulse-STRONG 1s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 101;                 /* nad wszystkimi pseudo-elementami */
+  will-change: transform, box-shadow;
+  mix-blend-mode: screen;
+}
+
+/* Na jasnych polach wyłącz blend i dodaj ciemny ring pod spodem dla kontrastu */
+.square.light.king-in-check::before {
+  mix-blend-mode: normal;
+  box-shadow:
+    0 0 0 7px rgba(0, 4, 36, 0.6), /* kontrastowy ring */
+    0 0 18px rgba(255, 0, 0, 1),
+    0 0 40px rgba(255, 0, 0, .95),
+    0 0 72px rgba(255, 0, 0, .92);
+}
+
+/* Gdy jednocześnie pole jest aktywne, wciąż priorytet ma neon króla */
+.square.king-in-check.active::after {
+  opacity: .7;
+  filter: saturate(0.6) brightness(0.85);
+}
+
+/* Silniejszy puls + delikatny scale (bez „rozlewania” poza kontener) */
+@keyframes king-neon-pulse-STRONG {
+  0% {
+    transform: scale(1);
+    box-shadow:
+      0 0 12px #ffffff,
+      0 0 10px rgba(255, 0, 0, .95),
+      0 0 28px rgba(255, 0, 0, .9),
+      0 0 56px rgba(255, 0, 0, .85);
+  }
+  50% {
+    transform: scale(1.035);
+    box-shadow:
+      0 0 18px #ffffff,
+      0 0 18px rgba(255, 0, 0, 1),
+      0 0 44px rgba(255, 0, 0, .98),
+      0 0 90px rgba(255, 0, 0, .95);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 12px #ffffff,
+      0 0 10px rgba(255, 0, 0, .95),
+      0 0 28px rgba(255, 0, 0, .9),
+      0 0 56px rgba(255, 0, 0, .85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .square.king-in-check::before { animation: none; }
 }
