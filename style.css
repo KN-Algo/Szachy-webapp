@@ -219,3 +219,180 @@
   content: none !important;
 }
 
+/* =========================
+   LAYOUT & RESPONSYWNOŚĆ – NADPISANIA
+   ========================= */
+
+/* parametry layoutu */
+:root{
+  --panel-w: 380px; /* szerokość prawego panelu na desktopie */
+  --gutter: 28px;   /* odstęp między kolumnami (jak w .layout) */
+}
+
+/* używaj var() zamiast stałej w siatce */
+.layout{
+  grid-template-columns: 1fr var(--panel-w);
+  gap: var(--gutter);
+}
+
+/* plansza ma dokładnie tyle szerokości, ile zostaje obok panelu
+   (ograniczamy też wysokością okna) */
+#board-col{
+  /* działa niezależnie od definicji --board-size w chessboard.css,
+     bo zmienna kaskaduje i ta z #board-col ma pierwszeństwo */
+  --board-size: clamp(
+    360px,
+    min(calc(95vw - var(--panel-w) - var(--gutter)), 82vh),
+    1000px
+  );
+}
+
+/* wyrównaj górę: zdejmij wewnętrzny padding wrappera planszy na desktopie */
+#board-col .chessboard-wrapper,
+#board-col .chessboard-wrapper-row{
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* panel i plansza zawsze kotwiczą się do górnej krawędzi siatki */
+#panel-col, #board-col{ align-self: start; }
+
+/* niech karta „Logi ruchów” itd. ładnie zawija się w jednej kolumnie
+   już na średnich szerokościach */
+@media (max-width: 1200px){
+  :root{ --panel-w: 340px; }
+}
+
+/* na węższych desktopach jeszcze ciaśniej */
+@media (max-width: 1100px){
+  :root{ --panel-w: 320px; }
+}
+
+/* WIDOK MOBILE/TABLET – jedna kolumna (masz to już w pliku),
+   ale podmieniamy rozmiar planszy na „ekranowy” */
+@media (max-width: 992px){
+  /* .layout już przełącza się na 1 kolumnę w Twoim CSS */
+  #board-col{
+    --board-size: min(92vw, 80vh);
+  }
+  /* odrobina oddechu między sekcjami */
+  .panel-card{ margin-bottom: 14px; }
+}
+
+/* === LAYOUT: 2 kolumny na desktopie, równa góra === */
+:root{
+  --gutter: 28px;
+  --panel-w: clamp(320px, 28vw, 420px); /* panel zwęża się na mniejszych, rośnie na większych */
+}
+
+.layout{
+  grid-template-columns: minmax(0, 1fr) var(--panel-w);
+  gap: var(--gutter);
+  align-items: start; /* kotwiczymy obie kolumny do góry */
+}
+
+/* kolumny zawsze przyklejone do górnej krawędzi grida */
+#board-col, #panel-col{ align-self: start; }
+
+
+/* uczymy #board-col bycia kontenerem rozmiaru */
+#board-col{ 
+  container-type: inline-size; 
+  /* domyślna wielkość planszy = ~95% szerokości tej kolumny, ale nie wyższa niż 82% wysokości okna */
+  --board-size: min(95cqw, 82vh);
+}
+
+/* zdejmij zbędną poduszkę nad planszą, żeby wyrównać górę z panelem */
+#board-col .chessboard-wrapper-row{ padding-top: 0; }
+#board-col .chessboard-wrapper{ padding-top: 10px; }
+
+/* plansza nadpisze to, co ma w chessboard.css: :root{ --board-size: ... }  */
+/* ponieważ zmienna ustawiona na #board-col „wygrywa” kaskadą dla jego potomków */
+
+
+@media (max-width: 1200px){
+  :root{ --panel-w: clamp(300px, 32vw, 380px); }
+}
+
+@media (max-width: 992px){
+  /* Jedna kolumna: masz to już w style.css – zostaje */
+  /* Plansza = szerokość kolumny (czyli ekranu) */
+  #board-col{ --board-size: min(96cqw, 84vh); }
+  /* panel bez sticky na mobile */
+  #panel-col{ position: static; }
+}
+
+/* Przyjemne „przyklejenie” prawego panelu na desktopie – opcjonalnie, ale pomaga w UX */
+@media (min-width: 993px){
+  #panel-col{ position: sticky; top: 16px; }
+}
+
+
+/* =========================
+   LAYOUT – centrowanie i elastyczność
+   ========================= */
+
+/* Cały grid wyśrodkuj pionowo na desktopie */
+@media (min-width: 992px){
+  .layout{
+    min-height: 100vh;        /* mamy miejsce do centrowania */
+    margin: 0 auto;           /* środek w poziomie */
+    padding: 20px 0 40px;     /* oddech zamiast margin-top/bottom */
+    align-content: center;    /* <<< klucz: kolumny na środku wysokości */
+  }
+}
+
+/* Uelastycznij szerokość prawego panelu i trzymaj 2 kolumny */
+:root{
+  --panel-w: clamp(320px, 30vw, 420px);
+  --gutter: 28px;
+}
+.layout{
+  grid-template-columns: minmax(0,1fr) var(--panel-w);
+  gap: var(--gutter);
+  align-items: start; /* kolumny kotwiczą się do góry swojej komórki */
+}
+
+/* =========================
+   SZACHOWNICA – rozmiar per-kolumna (zero wychodzenia poza panel)
+   ========================= */
+
+/* Ile pikseli zajmują legendy A–H i 1–8 (po 28px z każdej strony) */
+#board-col{ --labels: 56px; }
+
+/* Szachownica skaluje się do szerokości swojej kolumny,
+   uwzględniając dodatkowe 56px na legendy.
+   Dodatkowo ograniczamy wysokością okna, żeby nie „przebijała” w pionie. */
+#board-col{
+  /* ważne: ta zmienna nadpisuje tę z chessboard.css */
+  --board-size: clamp(
+    320px,                                  /* sensowne minimum na desktop */
+    min(calc(100% - var(--labels)), 84vh),  /* kolumna – 56px legend oraz wysokość okna */
+    1100px                                  /* górne ograniczenie, opcjonalnie */
+  );
+}
+
+/* Delikatne korekty odstępów wrappera, żeby górne krawędzie były równo */
+#board-col .chessboard-wrapper-row{ padding-top: 0; }
+#board-col .chessboard-wrapper{ padding-top: 10px; }
+
+/* =========================
+   MOBILE / TABLET – jedna kolumna,
+   panel POD szachownicą 
+   ========================= */
+@media (max-width: 992px){
+  .layout{ grid-template-columns: 1fr; }
+  #panel-col{ order: 2; }  /* panel pod planszą */
+  #board-col{ order: 1; }
+
+  /* plansza używa pełnej szerokości kolumny – nadal odejmujemy legendy */
+  #board-col{
+    --board-size: clamp(
+      260px,
+      min(calc(100% - var(--labels)), 88vh),
+      900px
+    );
+  }
+
+  .panel-row{ grid-template-columns: 1fr; }
+}
