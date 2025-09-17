@@ -74,16 +74,42 @@
     </div>
   `;
   const css = `
-    .promo-overlay{position:fixed;inset:0;background:rgba(0,4,36,.78);display:none;place-items:center;z-index:10000}
-    .promo-overlay.active{display:grid}
-    .promo-card{background:#fff2f0;color:#000424;border-radius:16px;padding:20px 22px;width:clamp(260px,32vw,420px);box-shadow:0 14px 40px rgba(0,0,0,.35);text-align:center}
-    .promo-card h3{margin:0 0 6px;font-size:1.25rem}
-    .promo-sub{margin:0 0 14px;opacity:.8}
-    .promo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-    .promo-opt{aspect-ratio:1/1;border-radius:12px;background:#000424;border:2px solid #000424;cursor:pointer;display:grid;place-items:center;transition:transform .08s ease,box-shadow .08s ease,background .08s ease}
-    .promo-opt:hover,.promo-opt:focus{outline:none;transform:translateY(-1px);box-shadow:0 8px 16px rgba(0,0,0,.28);background:#0e143a}
-    .promo-opt img{width:70%;height:70%;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
-  `;
+  .promo-overlay{position:fixed;inset:0;background:rgba(0,4,36,.78);display:none;place-items:center;z-index:10000}
+  .promo-overlay.active{display:grid}
+
+  /* KARTA: jasne tło + ciemny tekst, z wysokim priorytetem */
+  .promo-card{
+    background:#fff2f0;
+    color:#000424 !important;
+    border-radius:16px;
+    padding:20px 22px;
+    width:clamp(260px,32vw,420px);
+    box-shadow:0 14px 40px rgba(0,0,0,.35);
+    text-align:center;
+  }
+  /* Wymuś kolor na nagłówku i podtytule (niezależnie od globalnych stylów) */
+  .promo-card h3,
+  .promo-card .promo-sub{
+    color:#000424 !important;
+    text-shadow:none !important;
+    -webkit-text-fill-color: #000424; /* Safari/Chromium edge case */
+    user-select:none;                 /* żeby nie łapało przypadkowego zaznaczenia */
+  }
+
+  /* Czytelne zaznaczenie tekstu w karcie, gdy jednak ktoś je złapie */
+  .promo-card *::selection{
+    background:#0d6efd;
+    color:#fff !important;
+  }
+
+  .promo-sub{margin:0 0 14px;opacity:.85}
+
+  .promo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .promo-opt{aspect-ratio:1/1;border-radius:12px;background:#000424;border:2px solid #000424;cursor:pointer;display:grid;place-items:center;transition:transform .08s ease,box-shadow .08s ease,background .08s ease}
+  .promo-opt:hover,.promo-opt:focus{outline:none;transform:translateY(-1px);box-shadow:0 8px 16px rgba(0,0,0,.28);background:#0e143a}
+  .promo-opt img{width:70%;height:70%;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+`;
+
 
   function ensureModal() {
     if (document.getElementById("promotionOverlay")) return;
