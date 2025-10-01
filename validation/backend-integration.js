@@ -106,6 +106,13 @@ function previewMove(from, to) {
   return true;
 }
 
+function setBadgeSafe(el, state, label) {
+  if (typeof window.setBadge === "function" && el) {
+    window.setBadge(el, state, label);
+  }
+}
+
+
 /* ===== DIFF „LICZENIOWY” ZBIĆ ===== */
 
 function countPieces(board) {
@@ -543,7 +550,54 @@ window.addEventListener("DOMContentLoaded", () => {
       (turn === "white" || !turn)
     );
   }
+// =============================================================================
+// --- whitelist dozwolonych stanów RPi (README) ---
+// dozwolone stany – wszystko inne => "unknown"
+const RPI_ALLOWED = new Set(["ready", "moving", "error", "busy", "unknown"]);
 
+function cleanStatusString(s) {
+  if (typeof s !== "string") return null;
+  let t = s.trim().toLowerCase();
+  // zdejmij otaczające cudzysłowy, jeśli są
+  if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
+    t = t.slice(1, -1).trim();
+  }
+  // na wszelki wypadek usuń znaki nieliterowe po bokach
+  t = t.replace(/^[^a-z]+|[^a-z]+$/g, "");
+  return RPI_ALLOWED.has(t) ? t : null;
+}
+
+function normalizeRpi(payload) {
+  // 1) czysty string z Mercure
+  const direct = cleanStatusString(payload);
+  if (direct) return direct;
+
+  // 2) obiekt – kolejność: status → status.status → RAW → state → severity → message
+  if (payload && typeof payload === "object") {
+    let s = null;
+
+    if (!s && typeof payload.status === "string") s = cleanStatusString(payload.status);
+    if (!s && payload.status && typeof payload.status === "object")
+      s = cleanStatusString(payload.status.status);
+    // <<< KLUCZOWE: PlainText z MQTTX backend pakuje jako RAW
+    if (!s && typeof payload.raw === "string") s = cleanStatusString(payload.raw);
+    if (!s && typeof payload.state === "string") s = cleanStatusString(payload.state);
+    if (!s && typeof payload.severity === "string") s = cleanStatusString(payload.severity);
+    if (!s && typeof payload.message === "string") {
+      const m = payload.message.toLowerCase();
+      if (m.includes("error")) s = "error";
+      else if (m.includes("moving")) s = "moving";
+      else if (m.includes("ready")) s = "ready";
+      else if (m.includes("busy")) s = "busy";
+    }
+    return s || "unknown";
+  }
+
+  return "unknown";
+}
+
+
+// ===========================================================================
   // Odbiór zdarzeń Mercure
   eventSource.onmessage = (event) => {
     try {
@@ -671,13 +725,26 @@ window.addEventListener("DOMContentLoaded", () => {
           break;
         }
 
-        case "raspi_status": {
-          const el = document.getElementById("status-raspi");
-          if (typeof window.setBadge === "function")
-            window.setBadge(el, data?.data?.status || "unknown", "RPi");
-          console.log("[STATUS][RPi]", data?.data || {});
-          break;
-        }
+case "raspi_status": {
+  const el = document.getElementById("status-raspi");
+  const payload = data?.data; // string lub obiekt
+  const state = normalizeRpi(payload);
+
+  if (typeof window.setBadge === "function" && el) {
+    window.setBadge(el, state, "RPi");
+  }
+
+  console.log("[STATUS][RPi]", {
+    component: "raspberry_pi",
+    state,
+    typeof: typeof payload,
+    raw: payload,
+  });
+  break;
+}
+
+
+
 
         case "engine_status": {
           const el = document.getElementById("status-engine");
