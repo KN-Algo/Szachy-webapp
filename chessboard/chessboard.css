@@ -452,3 +452,111 @@
 @media (prefers-reduced-motion: reduce){
   .square.king-in-check::before { animation: none; }
 }
+
+/* ===== LAST MOVE (bardziej wyraziste, z wypełnieniem + impuls) ===== */
+.square.last-move { position: relative; }
+
+.square.last-move::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 52% 48%, rgba(155,70,255,0.20), rgba(110,40,200,0.10) 70%, rgba(100,30,190,0.05) 100%);
+  border: 3px solid rgba(170, 95, 255, 0.88);
+  box-shadow:
+    0 0 20px rgba(165,80,255,0.55),
+    0 0 8px rgba(165,80,255,0.70) inset,
+    0 0 2px 2px rgba(160,70,255,0.30);
+  pointer-events: none;
+  animation: last-move-pulse 1.6s ease-in-out infinite;
+  z-index: 1;
+  mix-blend-mode: screen;
+  will-change: transform, box-shadow;
+  transform-origin: center;
+}
+
+@keyframes last-move-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 0 rgba(170,95,255,0.00),
+      0 0 22px rgba(165,80,255,0.60),
+      0 0 9px rgba(165,80,255,0.70) inset,
+      0 0 2px 2px rgba(160,70,255,0.30);
+  }
+  10% {
+    transform: scale(1.035);
+    box-shadow:
+      0 0 14px 6px rgba(170,95,255,0.25),         /* krótki impulsowy pierścień */
+      0 0 28px rgba(175,100,255,0.70),
+      0 0 11px rgba(175,100,255,0.80) inset,
+      0 0 3px 2px rgba(165,80,255,0.35);
+  }
+  22% {
+    transform: scale(1.018);
+    box-shadow:
+      0 0 8px 3px rgba(160,70,255,0.18),
+      0 0 24px rgba(170,90,255,0.62),
+      0 0 9px rgba(170,90,255,0.72) inset,
+      0 0 3px 2px rgba(160,70,255,0.32);
+  }
+  50% {
+    transform: scale(1.01);
+    box-shadow:
+      0 0 6px 2px rgba(155, 65, 250, 0.15),
+      0 0 26px rgba(180, 105, 255, 0.68),
+      0 0 10px rgba(180, 105, 255, 0.78) inset,
+      0 0 3px 2px rgba(160,70,255,0.30);
+  }
+  75% {
+    transform: scale(1.004);
+    box-shadow:
+      0 0 4px 1px rgba(150,60,245,0.10),
+      0 0 18px rgba(170,90,255,0.55),
+      0 0 8px rgba(170,90,255,0.70) inset,
+      0 0 2px 2px rgba(160,70,255,0.28);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 0 rgba(170,95,255,0.00),
+      0 0 20px rgba(165,80,255,0.55),
+      0 0 8px rgba(165,80,255,0.70) inset,
+      0 0 2px 2px rgba(160,70,255,0.30);
+  }
+}
+
+/* ===== LAST MOVE: warianty FROM / TO (przywrócone) ===== */
+.square.last-move-from::before {
+  border-style: dashed;
+  opacity: 0.92;
+  /* trochę delikatniejsze wewnętrzne światło */
+  box-shadow:
+    0 0 16px rgba(165,80,255,0.50),
+    0 0 7px rgba(165,80,255,0.62) inset,
+    0 0 2px 2px rgba(160,70,255,0.28);
+}
+
+.square.last-move-to::before {
+  /* docelowe pole – mocniejszy glow (solid już domyślnie) */
+  box-shadow:
+    0 0 24px rgba(175,100,255,0.70),
+    0 0 10px rgba(175,100,255,0.80) inset,
+    0 0 3px 2px rgba(165,80,255,0.34);
+}
+
+/* Na jasnych polach nie nadpisujemy stylu linii – tylko kolor/glow jeśli trzeba */
+.square.light.last-move-from::before {
+  border-style: dashed;
+  /* lekkie przyciemnienie wypełnienia dla kontrastu */
+  filter: brightness(0.97);
+}
+
+.square.light.last-move-to::before {
+  /* subtelne wzmocnienie docelowego */
+  box-shadow:
+    0 0 26px rgba(180,105,255,0.75),
+    0 0 11px rgba(180,105,255,0.85) inset,
+    0 0 3px 2px rgba(170,85,255,0.36);
+}
