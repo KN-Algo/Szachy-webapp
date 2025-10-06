@@ -31,10 +31,13 @@ window._previewTimeout = null;
 /* ========================================================================== */
 
 function statesEqual(a, b) {
+  if (a === b) return true;
   const aKeys = Object.keys(a || {});
   const bKeys = Object.keys(b || {});
   if (aKeys.length !== bKeys.length) return false;
-  for (const k of aKeys) if (a[k] !== b[k]) return false;
+  for (const k of aKeys) {
+    if (a[k] !== b[k]) return false;
+  }
   return true;
 }
 
@@ -223,7 +226,8 @@ function applyIncomingState(state, reason = "update", move) {
   if (!START_BOARD) START_BOARD = { ...(window.boardState || {}) };
 
   if (statesEqual(incoming, window.boardState)) {
-    console.log("[STATE]", reason, "– bez zmian (pomijam render).");
+    // nawet jeśli brak różnicy – zaktualizuj highlight szacha (np. sam in_check się zmienił)
+    updateCheckHighlight(state);
     return;
   }
 
@@ -242,7 +246,6 @@ function applyIncomingState(state, reason = "update", move) {
     return;
   }
 
-  // Detekcja bicia (jeśli znamy move)
   let capturedCode = null;
   if (move && prev[move.to]) {
     const movingTeam = getTeam(prev[move.from]);
@@ -252,42 +255,46 @@ function applyIncomingState(state, reason = "update", move) {
     }
   }
 
-  // Zastosuj stan i wyrenderuj
   window.boardState = incoming;
   window.selectedSquare = null;
   if (typeof window.renderBoard === "function")
     window.renderBoard(window.boardState);
 
-  // Biciez move
-  if (capturedCode) {
-    try {
-      window.capturePiece?.(capturedCode);
-    } catch (_) {}
-    try {
-      window.captureSound?.play?.();
-    } catch (_) {}
+  // Podświetlenie szacha po renderze
+  updateCheckHighlight(state);
+
+  // Przy game_reset nie pokazujemy last move
+  if (reason === "game_reset") {
+    window.clearLastMoveHighlight?.();
+  } else {
+    (function applyLastMoveHighlight() {
+      let m = move;
+      if (!m) m = _detectSimpleMove(prev, incoming);
+      if (m && m.from && m.to && window.highlightLastMove) {
+        window.highlightLastMove(m.from, m.to);
+      }
+    })();
   }
 
-  // Fallback liczeniowy (odporny na specjalne ruchy)
+  if (capturedCode) {
+    try { window.capturePiece?.(capturedCode); } catch (_) {}
+    try { window.captureSound?.play?.(); } catch (_) {}
+  }
+
   {
-    let removed = diffCapturedByCount(prev, incoming); // ['bp','wn',...]
+    let removed = diffCapturedByCount(prev, incoming);
     if (capturedCode) {
       const i = removed.indexOf(capturedCode);
       if (i !== -1) removed.splice(i, 1);
     }
     if (removed.length) {
-      removed.forEach((code) => {
-        try {
-          window.capturePiece?.(code);
-        } catch (_) {}
+      removed.forEach(code => {
+        try { window.capturePiece?.(code); } catch (_) {}
       });
-      try {
-        window.captureSound?.play?.();
-      } catch (_) {}
+      try { window.captureSound?.play?.(); } catch (_) {}
     }
   }
 
-  // Flagi
   if (!isStartBoard) gameStarted = true;
   if (allowResetToStart && isStartBoard) {
     gameStarted = false;

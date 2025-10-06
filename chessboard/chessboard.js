@@ -191,9 +191,11 @@ window.__isResetInProgress = false;
 
 // 1) Lokalny soft-reset UI (bez FEN) – na czas oczekiwania na event z backendu
 window.UI_ResetLocal = function (optimistic = true) {
-  try {
-    window.__isResetInProgress = true;
+  window.__isResetInProgress = true;
+  window.clearLastMoveHighlight?.();
+  window.clearHighlights?.();
 
+  try {
     // zamknij modale game-over / komunikaty
     const go = document.querySelector(".go-overlay");
     if (go) go.classList.remove("active");
@@ -225,6 +227,10 @@ window.UI_ResetLocal = function (optimistic = true) {
 
 // 2) Twarde zastosowanie resetu z backendu (z FEN)
 window.UI_ApplyGameReset = function (state) {
+  window.__isResetInProgress = false;
+  window.clearLastMoveHighlight?.();
+  window.clearHighlights?.();
+
   try {
     // Wczytaj pozycję ze stanu backendu (źródło prawdy)
     if (typeof window.__setBoardFromFEN === "function") {
@@ -269,9 +275,11 @@ window.UI_ApplyGameReset = function (state) {
 
 // --- Podświetlenia ---
 window.clearHighlights = function () {
+  // istniejące czyszczenia ...
   document
-    .querySelectorAll(".square.active, .square.invalid, .square.move-target")
-    .forEach((el) => el.classList.remove("active", "invalid", "move-target"));
+    .querySelectorAll(".square.last-move, .square.last-move-from, .square.last-move-to")
+    .forEach(el => el.classList.remove("last-move","last-move-from","last-move-to"));
+  window.clearKingInCheck?.();
 };
 
 // --- Log ruchów ---
@@ -840,3 +848,27 @@ window.updateTurnIndicator = function (turn) {
     label.textContent = turn === "white" ? "Białe" : "Czarne";
   }
 };
+
+// === LAST MOVE HIGHLIGHT ===
+window.clearLastMoveHighlight = function () {
+  document
+    .querySelectorAll(".square.last-move, .square.last-move-from, .square.last-move-to")
+    .forEach(el => el.classList.remove("last-move", "last-move-from", "last-move-to"));
+};
+
+window.highlightLastMove = function (from, to) {
+  window.clearLastMoveHighlight();
+  if (!from || !to) return;
+  const fromEl = document.querySelector(`.square[data-coord="${from}"]`);
+  const toEl = document.querySelector(`.square[data-coord="${to}"]`);
+  if (fromEl) {
+    fromEl.classList.add("last-move", "last-move-from");
+  }
+  if (toEl) {
+    toEl.classList.add("last-move", "last-move-to");
+  }
+};
+
+// Upewnij się że przy każdym pełnym renderze (np. reset) nie gubimy stanu ostatniego ruchu.
+// Możesz trzymać go globalnie, jeśli chcesz:
+// window.__lastMoveRef = {from:'e2',to:'e4'} i po renderBoard odtwarzać highlight.
