@@ -12,8 +12,6 @@
   --bg-darker: #000210;
   --accent: #0d6efd;
   --text: #fff2f0;
-  /* + stały wymiar miniatury/wiersza placeholdera */
-  --cap-size: 58px;                  /* desktop */
 }
 
 /* ====== TŁO: PARTICLES ====== */
@@ -172,35 +170,15 @@
    ===============  CAPTURED –  SEKCJA  =============
    ========================================================= */
 
-/* siatka miniaturek (BASIS) */
+/* siatka miniaturek */
 .captured-grid{
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  min-height: 0;                     /* było: 86px – usuwa rozpychanie */
-  grid-auto-rows: var(--cap-size);   /* każdy rząd = rozmiar miniatury */
+  min-height: 86px;
 }
 
-/* placeholdery SĄ siatką – wysokość na jeden rząd + scroll wewnątrz */
-#captured-opponent,
-#captured-player{
-  /* te elementy mają też klasę .captured-grid, więc nadpisujemy tu bazę */
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: var(--cap-size);
-  gap: 8px;
-
-  height: var(--cap-size);
-  min-height: var(--cap-size);
-  max-height: var(--cap-size);
-  overflow-y: auto;                  /* wewnętrzny scroll */
-  overflow-x: hidden;
-
-  background: rgba(0,4,36,0.85);
-  border-radius: 12px;
-}
-
-/* wrapper pod miniaturą – bez dodatkowej poduszki, żeby 1 rząd = 1 miniatura */
+/* wrapper pod miniaturą – lokalne halo zwiększające kontrast */
 .captured-grid .cap-wrap{
   position: relative;
   display: flex;
@@ -208,187 +186,213 @@
   justify-content: center;
   background: radial-gradient(60% 60% at 50% 45%, rgba(255,242,240,.06), rgba(255,242,240,0) 70%);
   border-radius: 10px;
-  padding: 0;                         /* było: 2px */
+  padding: 2px;
 }
 
-/* miniatury w stałym rozmiarze rzędu */
+/* miniatury */
 .captured-grid img.captured-piece{
-  width: var(--cap-size);
-  height: var(--cap-size);
-  max-width: var(--cap-size);
-  max-height: var(--cap-size);
-  object-fit: contain;
+  width: 100%;
+  max-width: 58px;
   user-select: none;
   pointer-events: none;
 }
 
-/* czarne – efekt jak wcześniej */
+/* białe – delikatny neon (spójność z planszą) */
+/* .captured-grid img.captured-piece.is-white{
+  filter: drop-shadow(0 0 3px #fff2f0) drop-shadow(0 0 6px #0d6efd);
+} */
+
+/* czarne – realne rozjaśnienie + kontrast + neon */
 .captured-grid img.captured-piece.is-black{
   filter: brightness(1.95) contrast(1.28) saturate(1.05)
           drop-shadow(0 0 3px #fff2f0) drop-shadow(0 0 6px #0d6efd) !important;
 }
 
-/* Logi – własny scroll, nie rozszerza karty */
-.logs-wrap{
-  max-height: 260px;
-  overflow-y: auto;
-  overflow-x: hidden;
+/* panele – neutralne tło, bez dodatkowego przyciemniania/overlay */
+#captured-opponent,
+#captured-player{
+  background: rgba(0,4,36,0.85);
+  border-radius: 12px;
+}
+#captured-opponent::before, #captured-opponent::after,
+#captured-player::before,  #captured-player::after{
+  content: none !important;
 }
 
-/* Mobile/Tablet – mniejszy 1-rzędowy placeholder */
+/* =========================
+   LAYOUT & RESPONSYWNOŚĆ – NADPISANIA
+   ========================= */
+
+/* parametry layoutu */
+:root{
+  --panel-w: 380px; /* szerokość prawego panelu na desktopie */
+  --gutter: 28px;   /* odstęp między kolumnami (jak w .layout) */
+}
+
+/* używaj var() zamiast stałej w siatce */
+.layout{
+  grid-template-columns: 1fr var(--panel-w);
+  gap: var(--gutter);
+}
+
+/* plansza ma dokładnie tyle szerokości, ile zostaje obok panelu
+   (ograniczamy też wysokością okna) */
+#board-col{
+  /* działa niezależnie od definicji --board-size w chessboard.css,
+     bo zmienna kaskaduje i ta z #board-col ma pierwszeństwo */
+  --board-size: clamp(
+    360px,
+    min(calc(95vw - var(--panel-w) - var(--gutter)), 82vh),
+    1000px
+  );
+}
+
+/* wyrównaj górę: zdejmij wewnętrzny padding wrappera planszy na desktopie */
+#board-col .chessboard-wrapper,
+#board-col .chessboard-wrapper-row{
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* panel i plansza zawsze kotwiczą się do górnej krawędzi siatki */
+#panel-col, #board-col{ align-self: start; }
+
+/* niech karta „Logi ruchów” itd. ładnie zawija się w jednej kolumnie
+   już na średnich szerokościach */
+@media (max-width: 1200px){
+  :root{ --panel-w: 340px; }
+}
+
+/* na węższych desktopach jeszcze ciaśniej */
+@media (max-width: 1100px){
+  :root{ --panel-w: 320px; }
+}
+
+/* WIDOK MOBILE/TABLET – jedna kolumna (masz to już w pliku),
+   ale podmieniamy rozmiar planszy na „ekranowy” */
 @media (max-width: 992px){
-  :root{ --cap-size: 52px; }
+  /* .layout już przełącza się na 1 kolumnę w Twoim CSS */
+  #board-col{
+    --board-size: min(92vw, 80vh);
+  }
+  /* odrobina oddechu między sekcjami */
+  .panel-card{ margin-bottom: 14px; }
 }
 
-/* --- Placeholdery: 1 rząd, scroll tylko wewnątrz miniaturek --- */
-#captured-opponent .captured-grid,
-#captured-player .captured-grid {
-  height: 58px !important;      /* dokładnie jeden rząd */
-  min-height: 58px !important;
-  max-height: 58px !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  display: grid !important;
-  grid-auto-rows: 58px !important;
-  gap: 8px;
+/* === LAYOUT: 2 kolumny na desktopie, równa góra === */
+:root{
+  --gutter: 28px;
+  --panel-w: clamp(320px, 28vw, 420px); /* panel zwęża się na mniejszych, rośnie na większych */
 }
 
-/* Panel nie wymusza wysokości na karcie */
-#captured-opponent,
-#captured-player {
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow: visible !important;
-  display: block !important;
+.layout{
+  grid-template-columns: minmax(0, 1fr) var(--panel-w);
+  gap: var(--gutter);
+  align-items: start; /* kotwiczymy obie kolumny do góry */
 }
 
-/* Miniatury nie powiększają komórki */
-.captured-grid img.captured-piece {
-  width: 58px !important;
-  height: 58px !important;
-  max-width: 58px !important;
-  max-height: 58px !important;
-  object-fit: contain;
+/* kolumny zawsze przyklejone do górnej krawędzi grida */
+#board-col, #panel-col{ align-self: start; }
+
+
+/* uczymy #board-col bycia kontenerem rozmiaru */
+#board-col{ 
+  container-type: inline-size; 
+  /* domyślna wielkość planszy = ~95% szerokości tej kolumny, ale nie wyższa niż 82% wysokości okna */
+  --board-size: min(95cqw, 82vh);
 }
 
-/* Panel logów: ogranicz wysokość i wymuś scroll */
-.logs-wrap {
-  max-height: 260px !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
+/* zdejmij zbędną poduszkę nad planszą, żeby wyrównać górę z panelem */
+#board-col .chessboard-wrapper-row{ padding-top: 0; }
+#board-col .chessboard-wrapper{ padding-top: 10px; }
+
+/* plansza nadpisze to, co ma w chessboard.css: :root{ --board-size: ... }  */
+/* ponieważ zmienna ustawiona na #board-col „wygrywa” kaskadą dla jego potomków */
+
+
+@media (max-width: 1200px){
+  :root{ --panel-w: clamp(300px, 32vw, 380px); }
 }
 
-/* === Fix: placeholdery nie rosną, scroll tylko wewnątrz siatki === */
-:root { --cap-size: 58px; } /* 1 rząd = rozmiar miniatury */
-
-/* usuń rozpychanie przez Flexbox i wcześniejsze min-height */
-#captured-opponent,
-#captured-player{
-  display: block !important;     /* było: flex */
-  overflow: visible !important;
+@media (max-width: 992px){
+  /* Jedna kolumna: masz to już w style.css – zostaje */
+  /* Plansza = szerokość kolumny (czyli ekranu) */
+  #board-col{ --board-size: min(96cqw, 84vh); }
+  /* panel bez sticky na mobile */
+  #panel-col{ position: static; }
 }
 
-/* siatka jest scrollerem; jako flex-item potrzebuje min-height:0 (gdyby wrócił flex) */
-#captured-opponent .captured-grid,
-#captured-player  .captured-grid{
-  height: var(--cap-size) !important;      /* dokładnie jeden rząd */
-  min-height: 0 !important;                /* klucz: pozwól kurczyć się we flex-kontekście */
-  max-height: var(--cap-size) !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  grid-auto-rows: var(--cap-size) !important;
-}
-
-/* skasuj stare minimum 86px */
-.captured-grid{ min-height: 0 !important; }
-
-/* miniatury i wrap */
-.captured-grid .cap-wrap{
-  height: 100% !important;
-  width: 100% !important;
-  padding: 0 !important;
-}
-.captured-grid img.captured-piece{
-  width: var(--cap-size) !important;
-  height: var(--cap-size) !important;
-  max-width: var(--cap-size) !important;
-  max-height: var(--cap-size) !important;
-  object-fit: contain;
-  user-select: none;
-  pointer-events: none;
-}
-
-/* Fallback: gdyby markup używał .captured-slot zamiast .cap-wrap */
-#captured-opponent .captured-slot,
-#captured-player  .captured-slot{
-  width: var(--cap-size) !important;
-  height: var(--cap-size) !important;
-}
-
-/* Logi – nie rozciągają karty, zawsze własny scroll */
-.logs-wrap{
-  max-height: 260px !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-}
-
-/* === DESKTOP: pełny ekran, bez scrolla strony === */
+/* Przyjemne „przyklejenie” prawego panelu na desktopie – opcjonalnie, ale pomaga w UX */
 @media (min-width: 993px){
-  html, body { height: 100%; overflow: clip; }
-  #app       { height: 100dvh; min-height: 100dvh; }
-  .layout    { height: 100%; min-height: 0; margin: 12px auto; }
-  #panel-col { max-height: calc(100dvh - 24px); overflow: hidden; }
+  #panel-col{ position: sticky; top: 16px; }
 }
 
-/* === CAPTURED: 1 rząd = rozmiar miniatury; nadmiar przewijany wewnątrz === */
-:root { --cap-size: 58px; }
 
-/* Rodzic placeholdera nie wymusza własnych wysokości */
-#captured-opponent,
-#captured-player{
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow: visible !important;
+/* =========================
+   LAYOUT – centrowanie i elastyczność
+   ========================= */
+
+/* Cały grid wyśrodkuj pionowo na desktopie */
+@media (min-width: 992px){
+  .layout{
+    min-height: 100vh;        /* mamy miejsce do centrowania */
+    margin: 0 auto;           /* środek w poziomie */
+    padding: 20px 0 40px;     /* oddech zamiast margin-top/bottom */
+    align-content: center;    /* <<< klucz: kolumny na środku wysokości */
+  }
 }
 
-/* Obsłuż oba warianty struktury: gdy ID = siatka lub gdy siatka jest dzieckiem */
-#captured-opponent.captured-grid,
-#captured-player.captured-grid,
-#captured-opponent > .captured-grid,
-#captured-player  > .captured-grid{
-  display: grid !important;
-  grid-template-columns: repeat(4, var(--cap-size)) !important;
-  grid-auto-rows: var(--cap-size) !important;
-  gap: 8px !important;
-
-  height: var(--cap-size) !important;      /* dokładnie jeden rząd */
-  max-height: var(--cap-size) !important;
-  min-height: 0 !important;                /* ważne w kontekście flex */
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  scrollbar-gutter: stable both-edges;
+/* Uelastycznij szerokość prawego panelu i trzymaj 2 kolumny */
+:root{
+  --panel-w: clamp(320px, 30vw, 420px);
+  --gutter: 28px;
+}
+.layout{
+  grid-template-columns: minmax(0,1fr) var(--panel-w);
+  gap: var(--gutter);
+  align-items: start; /* kolumny kotwiczą się do góry swojej komórki */
 }
 
-/* element siatki nie ma własnych minimów, żeby nie rozpychał */
-.captured-grid{ min-height: 0 !important; }
+/* =========================
+   SZACHOWNICA – rozmiar per-kolumna (zero wychodzenia poza panel)
+   ========================= */
 
-/* Miniatury = stały wymiar rzędu */
-.captured-grid .cap-wrap{ height: 100% !important; width: 100% !important; padding: 0 !important; display:flex; align-items:center; justify-content:center; }
-.captured-grid img.captured-piece{
-  width: var(--cap-size) !important;
-  height: var(--cap-size) !important;
-  max-width: var(--cap-size) !important;
-  max-height: var(--cap-size) !important;
-  object-fit: contain;
-  user-select: none; pointer-events: none;
+/* Ile pikseli zajmują legendy A–H i 1–8 (po 28px z każdej strony) */
+#board-col{ --labels: 56px; }
+
+/* Szachownica skaluje się do szerokości swojej kolumny,
+   uwzględniając dodatkowe 56px na legendy.
+   Dodatkowo ograniczamy wysokością okna, żeby nie „przebijała” w pionie. */
+#board-col{
+  /* ważne: ta zmienna nadpisuje tę z chessboard.css */
+  --board-size: clamp(
+    320px,                                  /* sensowne minimum na desktop */
+    min(calc(100% - var(--labels)), 84vh),  /* kolumna – 56px legend oraz wysokość okna */
+    1100px                                  /* górne ograniczenie, opcjonalnie */
+  );
 }
 
-/* Logi – własny scroll, karta nie rośnie */
-.logs-wrap{
-  max-height: 260px !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  min-height: 0 !important;
+/* Delikatne korekty odstępów wrappera, żeby górne krawędzie były równo */
+#board-col .chessboard-wrapper-row{ padding-top: 0; }
+#board-col .chessboard-wrapper{ padding-top: 10px; }
+
+/* =========================
+   MOBILE / TABLET – jedna kolumna,
+   panel POD szachownicą 
+   ========================= */
+@media (max-width: 992px){
+  .layout{ grid-template-columns: 1fr; }
+  #panel-col{ order: 2; }  /* panel pod planszą */
+  #board-col{ order: 1; }
+
+  /* plansza używa pełnej szerokości kolumny – nadal odejmujemy legendy */
+  #board-col{
+    --board-size: clamp(
+      260px,
+      min(calc(100% - var(--labels)), 88vh),
+      900px
+    );
+  }
+
+  .panel-row{ grid-template-columns: 1fr; }
 }
