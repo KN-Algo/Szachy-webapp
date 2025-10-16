@@ -396,3 +396,97 @@
 
   .panel-row{ grid-template-columns: 1fr; }
 }
+
+/* === DESKTOP: pełnoekranowa, nieprzewijalna scena === */
+@media (min-width: 993px){
+  html, body{
+    height: 100%;
+    overflow: clip;            /* bez scrollbara na stronie */
+  }
+  #app{ height: 100dvh; }
+
+  .layout{
+    height: 100%;
+    min-height: 0;             /* nadpisuje wcześniejsze min-height:100vh */
+    margin: 0 auto;            /* bez dodatkowych marginesów pionowych */
+    padding: 10px 0 12px;      /* małe, kontrolowane odstępy */
+    box-sizing: border-box;
+    align-content: center;     /* opcjonalne centrowanie w pionie */
+  }
+
+  /* Plansza skaluje się do szerokości kolumny i do wysokości viewportu */
+  #board-col{
+    --labels: 56px;
+    --ui-vspace: 64px; /* suma górnych/dolnych odstępów wrapperów itp. */
+    --board-size: clamp(
+      320px,
+      min(calc(100% - var(--labels)), calc(100dvh - var(--ui-vspace))),
+      1100px
+    );
+  }
+
+  /* Zbijamy pionowe paddingi wrapperów, by nie „wychodzić” poza viewport */
+  #board-col .chessboard-wrapper-row{ padding-top: 0; padding-bottom: 0; }
+  #board-col .chessboard-wrapper{ padding-top: 6px; padding-bottom: 6px; }
+
+  /* Panel mieści się w viewport – bez wpływu na scrollbar strony */
+  #panel-col{
+    max-height: calc(100dvh - 20px);
+    overflow: hidden;          /* jeśli kiedyś treść będzie dłuższa: zmień na auto */
+    position: sticky;
+    top: 16px;                 /* zachowuje obecne „przyklejenie” */
+  }
+}
+
+/* Mobile/Tablet – normalne przewijanie */
+@media (max-width: 992px){
+  html, body{ overflow: auto; }
+}
+
+/* === CAPTURED: 1 rząd = rozmiar miniatury, reszta przewijana === */
+:root{
+  --cap-size: 58px;          /* docelowy wymiar miniatury i wysokość rzędu (desktop) */
+}
+
+#captured-opponent .captured-grid,
+#captured-player  .captured-grid{
+  height: var(--cap-size) !important;      /* dokładnie jeden rząd */
+  min-height: var(--cap-size) !important;
+  max-height: var(--cap-size) !important;
+  overflow-y: auto;                         /* scroll tylko w pionie wewnątrz siatki */
+  overflow-x: hidden;
+  scrollbar-gutter: stable both-edges;
+}
+
+/* rząd siatki ma ten sam wymiar co miniatura */
+.captured-grid{
+  grid-auto-rows: var(--cap-size) !important;
+  min-height: var(--cap-size) !important;
+  gap: 8px;                                 /* zostawiamy układ 4 kolumn */
+}
+
+/* wrapper wypełnia komórkę; bez dodatkowego marginesu, by "1 rząd" = rozmiar obrazka */
+.captured-grid .cap-wrap{
+  height: 100%;
+  width: 100%;
+  padding: 0;                               /* żeby wysokość rzędu = wysokość miniatury */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* miniatura w komórce ma dokładnie rozmiar rzędu */
+.captured-grid img.captured-piece{
+  width: var(--cap-size);
+  height: var(--cap-size);
+  max-width: var(--cap-size);
+  max-height: var(--cap-size);
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Mobile/Tablet – mniejszy 1-rzędowy placeholder */
+@media (max-width: 992px){
+  :root{ --cap-size: 52px; }
+}
