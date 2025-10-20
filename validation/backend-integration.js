@@ -919,49 +919,208 @@ function requestPossibleMoves(position) {
     });
 }
 
-function sendMove(from, to) {
-  window._lastUIMove = { from, to, ts: Date.now() };
+//function sendMove(from, to) {
+//  window._lastUIMove = { from, to, ts: Date.now() };
 
-  const moveKey = `${from}-${to}`;
-  if (!window._pendingMoves) window._pendingMoves = new Set();
+//  const moveKey = `${from}-${to}`;
+//  if (!window._pendingMoves) window._pendingMoves = new Set();
 
-  console.log(
-    `[SEND] Attempting move ${moveKey}, pending moves:`,
-    Array.from(window._pendingMoves)
-  );
+//  console.log(
+//    `[SEND] Attempting move ${moveKey}, pending moves:`,
+//    Array.from(window._pendingMoves)
+//  );
 
-  if (window._pendingMoves.has(moveKey)) {
-    console.log(`[SEND] Move ${moveKey} already pending - SKIPPING`);
-    return;
-  }
-  window._pendingMoves.add(moveKey);
+//  if (window._pendingMoves.has(moveKey)) {
+//    console.log(`[SEND] Move ${moveKey} already pending - SKIPPING`);
+//    return;
+//  }
+//  window._pendingMoves.add(moveKey);
 
-  console.log(`[SEND] Sending move ${moveKey} to backend`);
+//  console.log(`[SEND] Sending move ${moveKey} to backend`);
 
-  fetch(api("/move"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to }),
-  })
-    .then(async (res) => {
-      let data = null;
-      try {
-        data = await res.json();
-      } catch (_) {}
-      if (res.ok) {
-        console.log("[API] Ruch wysłany:", moveKey, data?.status || "");
-      } else {
-        console.error("[API] Błąd /move:", data?.error || res.status);
-        window.errorSound?.play?.();
-      }
-    })
-    .catch((err) => {
-      console.error("[API] Błąd sieci /move:", err);
-      window.errorSound?.play?.();
-      // Usuń z pending przy błędzie
-      if (window._pendingMoves) window._pendingMoves.delete(moveKey);
-    });
+//  fetch(api("/move"), {
+//    method: "POST",
+//    headers: { "Content-Type": "application/json" },
+//    body: JSON.stringify({ from, to }),
+//  })
+//    .then(async (res) => {
+//      let data = null;
+//      try {
+//        data = await res.json();
+//      } catch (_) {}
+//      if (res.ok) {
+//        console.log("[API] Ruch wysłany:", moveKey, data?.status || "");
+//      } else {
+//        console.error("[API] Błąd /move:", data?.error || res.status);
+//        window.errorSound?.play?.();
+//      }
+//    })
+//    .catch((err) => {
+//      console.error("[API] Błąd sieci /move:", err);
+//      window.errorSound?.play?.();
+//      // Usuń z pending przy błędzie
+//      if (window._pendingMoves) window._pendingMoves.delete(moveKey);
+//    });
+//}
+// === helpers (lokalne, bez zależności) ===
+function fileOf(sq) { return sq[0]; }
+function rankOf(sq) { return Number(sq[1]); }
+function pieceCodeToType(code) {
+    // mapuje 'wp','bn','bq' -> 'pawn'|'knight'|'queen'
+    const m = { p: 'pawn', r: 'rook', n: 'knight', b: 'bishop', q: 'queen', k: 'king' };
+    return code ? m[code[1]] : null;
 }
+function pieceCodeToColor(code) {
+    // 'w'|'b'
+    return code ? (code[0] === 'w' ? 'white' : 'black') : null;
+}
+function getPieceAt(boardState, sq) {
+    // boardState: { a1:'wr', ... } jak w README WebApp
+    const code = boardState?.[sq];
+    return code ? { code, type: pieceCodeToType(code), color: pieceCodeToColor(code) } : null;
+}
+function isCastling(from, to) {
+    // e1->g1 / e1->c1 / e8->g8 / e8->c8
+    const pairs = new Set(['e1-g1', 'e1-c1', 'e8-g8', 'e8-c8']);
+    return pairs.has(`${from}-${to}`);
+}
+function castlingSubtype(from, to) {
+    if (from === 'e1' && to === 'g1') return 'castling_kingside';
+    if (from === 'e1' && to === 'c1') return 'castling_queenside';
+    if (from === 'e8' && to === 'g8') return 'castling_kingside';
+    if (from === 'e8' && to === 'c8') return 'castling_queenside';
+    return null;
+}
+function isPawnPromotion(boardState, from, to) {
+    const moving = getPieceAt(boardState, from);
+    if (!moving || moving.type !== 'pawn') return false;
+    const rTo = rankOf(to);
+    return (moving.color === 'white' && rTo === 8) || (moving.color === 'black' && rTo === 1);
+}
+function isCapture(boardState, from, to) {
+    const moving = getPieceAt(boardState, from);
+    const target = getPieceAt(boardState, to);
+    if (!moving) return false;
+
+    // zwykłe bicie: na polu docelowym stoi przeciwnik
+    if (target && target.color !== moving.color) return true;
+
+    // en passant (front rozpozna "jak bicie"): pion idzie po skosie na puste pole
+    if (moving.type === 'pawn' && fileOf(from) !== fileOf(to) && !target) {
+        return true;
+    }
+    return false;
+}
+
+// Opcjonalnie: dialog wyboru promocji; jeżeli masz własny UI (np. modal),
+// udostępnij globalnie window.selectPromotionPiece(): Promise<'queen'|'rook'|'bishop'|'knight'>
+async function choosePromotionPiece(defaultPiece = 'queen') {
+    if (typeof window.selectPromotionPiece === 'function') {
+        try {
+            const p = await window.selectPromotionPiece();
+            if (['queen', 'rook', 'bishop', 'knight'].includes(p)) return p;
+        } catch (_) { }
+    }
+    return defaultPiece; // fallback: hetman
+}
+
+// === GŁÓWNA FUNKCJA ===
+async function sendMove(from, to) {
+    window._lastUIMove = { from, to, ts: Date.now() };
+
+    const moveKey = `${from}-${to}`;
+    if (!window._pendingMoves) window._pendingMoves = new Set();
+    if (window._pendingMoves.has(moveKey)) {
+        console.log(`[SEND] Move ${moveKey} already pending – SKIPPING`);
+        return;
+    }
+    window._pendingMoves.add(moveKey);
+
+    console.log(`[SEND] Preparing move ${moveKey} to backend`);
+
+    // --- detekcja typu ruchu na bazie aktualnego boardState ---
+    const board = { ...(window.boardState || {}) };
+    const moving = getPieceAt(board, from);
+
+    let special_move = null;
+    let captured_piece = null;
+    let promotion_piece = null;
+
+    // Roszada
+    if (moving?.type === 'king' && isCastling(from, to)) {
+        special_move = castlingSubtype(from, to); // 'castling_kingside' | 'castling_queenside'
+    }
+
+    // Promocja (może być z biciem)
+    const willPromote = isPawnPromotion(board, from, to);
+    if (willPromote) {
+        // jeśli promocja + bicie, poniżej dołożymy 'promotion_capture'
+        promotion_piece = await choosePromotionPiece('queen');
+    }
+
+    // Bicie (w tym en passant traktujemy jak bicie piona)
+    if (isCapture(board, from, to)) {
+        const target = getPieceAt(board, to);
+        if (target) {
+            captured_piece = target.type; // knight|bishop|rook|queen|king|pawn
+        } else {
+            // en passant – ofiara to pion
+            captured_piece = 'pawn';
+        }
+    }
+
+    // Ustal końcowy typ special_move zgodnie z README backendu
+    if (!special_move) {
+        if (willPromote && captured_piece) special_move = 'promotion_capture';
+        else if (willPromote) special_move = 'promotion';
+        else if (captured_piece) special_move = 'capture';
+    }
+
+    // --- budowa payloadu zgodnego z dokumentacją backendu ---
+    const payload = {
+        from,
+        to,
+        physical: false, // zawsze false dla UI → backend
+    };
+
+    if (special_move) payload.special_move = special_move;
+
+    // Specyficzne pola dla typów specjalnych (zgodnie z README)
+    if (special_move === 'capture' || special_move === 'promotion_capture') {
+        if (captured_piece) payload.captured_piece = captured_piece; // np. "knight"
+    }
+    if (special_move === 'promotion' || special_move === 'promotion_capture') {
+        payload.promotion_piece = promotion_piece || 'queen';
+        // opcjonalnie, ale zgodne z README
+        payload.available_pieces = ['queen', 'rook', 'bishop', 'knight'];
+    }
+
+    console.log('[SEND] Payload /move:', payload);
+
+    try {
+        const res = await fetch(api('/move'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        let data = null;
+        try { data = await res.json(); } catch (_) { }
+
+        if (res.ok) {
+            console.log('[API] Ruch wysłany /move OK:', moveKey, data?.status || '');
+        } else {
+            console.error('[API] Błąd /move:', data?.error || res.status);
+            window.errorSound?.play?.();
+        }
+    } catch (err) {
+        console.error('[API] Błąd sieci /move:', err);
+        window.errorSound?.play?.();
+    } finally {
+        if (window._pendingMoves) window._pendingMoves.delete(moveKey);
+    }
+}
+
 
 /* ========================================================================== */
 /*  RESET: oba przyciski (panel + modal)                                       */
